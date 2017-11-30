@@ -6,13 +6,28 @@ PROGRAM preclassificador
   !Este programa visa criar agrupamento de dados de litologias de poços         !
   !Cálculo de distâncias em um                                                  !
   !Subrotina Mahalanobis                                                        !
-  !Para usar compilação com flags utiilze:                                      !
+  !Para usar compilação com flags utilize:                                      !
   !gfortran -fbounds-check -fbacktrace -Wall -Wextra -pedantic                  ! 
   !"pasta/subpasta/nomedopragrama.f95" -o nomedoexecutável                      !
   !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
  
 
+                  !++++++++++++++++Tabela de Variáveis+++++++++++++++!
+                  !i - contador dimensinal dos vetores               !
+                  !ij - contador diimensional do nt e ntc            !
+                  !nt - dimensão dos dados de treinamento            !
+                  !ntc - dimensão dos dados de classificação         !
+                  !a - armazena codigo, prof, dens, gama, rho e vel  !
+                  !cl(i) - vetor de codigo                           !
+                  !prof(i) - vetor de profundidade                   ! 
+                  !tr(nt,4) - matriz de densidade                     !
+                  !tr(i,2) - matriz de raio-gama                     !
+                  !tr(i,3) - matriz de resistividade                 !
+                  !tr(i,4) - matriz de velocidade                    !
+                  !hip(nt,5,9) - hipermatriz com todos os dados
+
+                   
  IMPLICIT NONE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -22,30 +37,30 @@ PROGRAM preclassificador
   INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
   INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(10,100) 
 
-   INTEGER(KIND=SP):: ij, nt
- !  INTEGER(KIND=SP), ALLOCATABLE, DIMENSION(:):: ic1, ic2 
+  INTEGER(KIND=SP):: i, ij, nt, ntc
+  INTEGER(KIND=SP), ALLOCATABLE, DIMENSION(:):: ic1, ic2 
 
   REAL(KIND=DP):: a1, a2, a3, a4, a5, a6
    
    REAL(KIND=SP):: inicial, final, custocomputacional
- !  REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl
- !  REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr
- !  REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:,:)::hip
+   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl
+   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr
+   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:,:)::hip
 
- !CHARACTER(LEN=80):: cab(7)
+   CHARACTER(LEN=80):: rocha
 
- TYPE litologia
-  !INTEGER:: COMP
-  CHARACTER(LEN= 15) :: PALAVRA(7)
- END TYPE litologia
+    TYPE lixo
+     !INTEGER:: COMP
+     CHARACTER(LEN= 15) :: PALAVRA(7)
+    END TYPE lixo
 
- TYPE propriedade
-  !INTEGER:: COMP
-  CHARACTER(LEN= 15) :: PALAVRA 
- END TYPE propriedade
+   ! TYPE litologia
+     !INTEGER:: COMP
+    ! CHARACTER(LEN= 80) :: PALAVRA 
+    !END TYPE litologia
 
- TYPE(litologia):: cabecalho, branco, rocha!, codigo, profundidade 
- !TYPE(propriedade):: densidade, gama, resistividade, velocidade
+ TYPE(lixo):: cabecalho, branco 
+ !TYPE(litologia):: rocha
  
 
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -64,23 +79,17 @@ PROGRAM preclassificador
  !17 FORMAT(A30,2x,ES12.4E3)
  !18 FORMAT(2(f6.2,2x),2x,A11,2x,ES12.4E3)
 
-  OPEN(1,file='dados_sint_T1.txt') ! entrada do programa 						
-   
-		
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ !!!!!!!!!!!!!!!!!!!!!!!!!!ARMAZENANDO AS VARIÁVEIS DE ENTRADA !!!!!!!!!!!!!!!!!!
+ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-
-
-		
-   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-   !!!!!!!!!!!!!!!!!!!!!!!!!!ARMAZENANDO AS VARIÁVEIS DE ENTRADA !!!!!!!!!!!!!!!!!!
-   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+  OPEN(1,file='dados_sint_T1.txt') ! entrada do programa 			
    ! Leitura do arquivo de treinamento
 
    READ(1,15) cabecalho    ! leitura do cabeçalho
-   WRITE(6,15) cabecalho
+   !WRITE(6,15) cabecalho
    READ(1,15) branco    ! linha em branco abaixo do cabeçalho
-   WRITE(6,15) branco
+   !WRITE(6,15) branco
    
     ij=1
      DO WHILE (.TRUE.)
@@ -91,50 +100,52 @@ PROGRAM preclassificador
   CLOSE(1)
 
    nt=ij-1
- ! 	write(6,*) "n de dados de treinamento",nt
+  WRITE(6,*) "n de dados de treinamento->",nt
 
  ! !!!!!!!!!!!!!
  ! !        Leitura do arquivo de dados a serem classificados
 
- ! 	read(2,15) cab    ! cabeçalho
- ! !	write(6,15) cab
- ! 	read(2,15) cab    ! linha em branco abaixo do cabeçalho
- ! !	write(6,15) cab
+  
+ OPEN(2,file='dados_sint_c1.txt')
+  READ(2,15) cabecalho    ! cabeçalho
+  !WRITE(6,15) cabecalho
+  READ(2,15) branco    ! linha em branco abaixo do cabeçalho
+  !WRITE(6,15) branco
+  
+   ij=1
+   DO WHILE (.TRUE.)
+    READ(2,*,END=7) rocha,a1,a2,a3,a4,a5,a6
+    ij=ij+1
+   END DO 
+   7 CONTINUE
+ CLOSE(2)
 
- ! 	ij=1
- ! 	do while (.true.)
- ! 	read(2,*,end=7) branco,a1,a2,a3,a4,a5,a6
- ! 	ij=ij+1
- ! 	end do
- ! 7 continue
- ! 	close(2)
-
- ! 	ntc=ij-1 
- ! 	write(6,*) "n de dados a serem classificados",ntc
+   ntc=ij-1 
+   WRITE(6,*) "n de dados a serem classificados->",ntc
 
 
  ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 
- ! 	allocate (tr(nt,4),cl(nt),prof(nt),hip(nt,5,9))
+   ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9))
 
 
- ! 	hip=0d0
- ! 	ic1=0
- ! 	ic2=0
+   hip=0d0
+   ic1=0
+   ic2=0
 
- ! 	open(1,file='dados_sint_T1.txt')
-
- ! 	read(1,15) cab    ! cabeçalho
- ! !	write(6,15) cab
- ! 	read(1,15) cab    ! linha em branco abaixo do cabeçalho
- ! !	write(6,15) cab
+  OPEN(1,file='dados_sint_T1.txt')
+    
+    READ(1,15) cabecalho    ! cabeçalho 
+    !WRITE(6,15) cabecalho
+    READ(1,15) branco    ! linha em branco abaixo do cabeçalho
+    !WRITE(6,15) branco
 		
- ! 	do i=1,nt
- ! 	read(1,*) branco,cl(i),prof(i),tr(i,1),tr(i,2),tr(i,3),tr(i,4)
- ! 	end do
- ! 	close(1)
+    DO i=1,nt
+     READ(1,*) rocha,cl(i),prof(i),tr(i,1),tr(i,2),tr(i,3),tr(i,4)
+    END DO
+  CLOSE(1)
 
 
 
