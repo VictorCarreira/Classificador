@@ -38,8 +38,8 @@ PROGRAM preclassificador
   INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
   INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(10,100) 
 
-  INTEGER(KIND=SP):: i, ij, nt, ntc
-  INTEGER(KIND=SP), ALLOCATABLE, DIMENSION(:):: ic1, ic2 
+  INTEGER(KIND=SP):: i, j, ij, nt, ntc, nlito
+  INTEGER(KIND=SP), ALLOCATABLE, DIMENSION(:):: ic1, ic2
 
   REAL(KIND=DP):: a1, a2, a3, a4, a5, a6
    
@@ -129,7 +129,7 @@ PROGRAM preclassificador
 
 
 
-   ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9))
+   ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9),ic1(5), ic2(4))
 
 
    hip=0d0
@@ -151,8 +151,8 @@ PROGRAM preclassificador
 
    ! Preenchendo a hipermatriz
   DO i=1,nt
-    DO j=1,5
-     IF(cl(i) == dfloat(j))THEN
+    DO j=1,5                         !Bloco reservado para os 5 padrões caixa 
+     IF(cl(i) == j)THEN
       ic1(j)=ic1(j)+1
       hip(ic1(j),1,j)=prof(i)
       hip(ic1(j),2,j)=tr(i,1)
@@ -161,10 +161,10 @@ PROGRAM preclassificador
       hip(ic1(j),5,j)=tr(i,4)
      END IF
     END DO 
-     nlito=450	
+      nlito=450                      !Bloco reservado para o padrão sino
     DO j=1,4
       nlito=nlito+1
-      IF(cl(i) == dfloat(nlito))THEN
+      IF(cl(i) == nlito)THEN
        ic2(j)=ic2(j)+1
        hip(ic2(j),1,5+j)=prof(i)
        hip(ic2(j),2,5+j)=tr(i,1)
