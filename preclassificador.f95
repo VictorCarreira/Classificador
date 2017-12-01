@@ -21,11 +21,12 @@ PROGRAM preclassificador
                   !a - armazena codigo, prof, dens, gama, rho e vel  !
                   !cl(i) - vetor de codigo                           !
                   !prof(i) - vetor de profundidade                   ! 
-                  !tr(nt,4) - matriz de densidade                     !
+                  !tr(nt,4) - matriz de densidade                    ! 
                   !tr(i,2) - matriz de raio-gama                     !
                   !tr(i,3) - matriz de resistividade                 !
                   !tr(i,4) - matriz de velocidade                    !
-                  !hip(nt,5,9) - hipermatriz com todos os dados
+                  !hip(nt,5,9) - hipermatriz com todos os dados      !
+                  !--------------------------------------------------!
 
                    
  IMPLICIT NONE
@@ -148,46 +149,33 @@ PROGRAM preclassificador
   CLOSE(1)
 
 
-
- ! 	do i=1,nt
-	
- ! 	do j=1,5
- ! 	if(cl(i) == dfloat(j))then
- ! 	ic1(j)=ic1(j)+1
- ! 	hip(ic1(j),1,j)=prof(i)
- ! 	hip(ic1(j),2,j)=tr(i,1)
- ! 	hip(ic1(j),3,j)=tr(i,2)
- ! 	hip(ic1(j),4,j)=tr(i,3)
- ! 	hip(ic1(j),5,j)=tr(i,4)
- ! 	end if
- ! 	end do 
-
-
-
-
- ! 	nlito=450	
- ! 	do j=1,4
- ! 	nlito=nlito+1
- ! 	if(cl(i) == dfloat(nlito))then
- ! 	ic2(j)=ic2(j)+1
- ! 	hip(ic2(j),1,5+j)=prof(i)
- ! 	hip(ic2(j),2,5+j)=tr(i,1)
- ! 	hip(ic2(j),3,5+j)=tr(i,2)
- ! 	hip(ic2(j),4,5+j)=tr(i,3)
- ! 	hip(ic2(j),5,5+j)=tr(i,4)
- ! 	end if
-	
- ! 	end do 
-
-
-
-
-
-
- ! !	print*, " até aqui, tudo bem"
- ! !	pause
-
- ! 	end do
+   ! Preenchendo a hipermatriz
+  DO i=1,nt
+    DO j=1,5
+     IF(cl(i) == dfloat(j))THEN
+      ic1(j)=ic1(j)+1
+      hip(ic1(j),1,j)=prof(i)
+      hip(ic1(j),2,j)=tr(i,1)
+      hip(ic1(j),3,j)=tr(i,2)
+      hip(ic1(j),4,j)=tr(i,3)
+      hip(ic1(j),5,j)=tr(i,4)
+     END IF
+    END DO 
+     nlito=450	
+    DO j=1,4
+      nlito=nlito+1
+      IF(cl(i) == dfloat(nlito))THEN
+       ic2(j)=ic2(j)+1
+       hip(ic2(j),1,5+j)=prof(i)
+       hip(ic2(j),2,5+j)=tr(i,1)
+       hip(ic2(j),3,5+j)=tr(i,2)
+       hip(ic2(j),4,5+j)=tr(i,3)
+       hip(ic2(j),5,5+j)=tr(i,4)
+      END IF
+    END DO  
+                     ! !	print*, " até aqui, tudo bem"
+                     ! !	pause
+  END DO
 
  ! 	allocate (lito1(ic1(1),4),lito2(1,4))
 
@@ -282,7 +270,7 @@ PROGRAM preclassificador
  PRINT*, 'Custo Computacional=',custocomputacional, 'segundos'
  PRINT*,' ************ FIM *************'
  
- CONTAINS
+ !CONTAINS
 
 !  SUBROUTINE maha(g11,np1,g22,np2,ndim,dist)      
 	
