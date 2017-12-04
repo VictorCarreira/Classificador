@@ -1,17 +1,17 @@
 PROGRAM preclassificador
-  !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
-  !Criação da subrotina do cálculo de distância por Mahalanobis                 !
-  !Orientador: Cosme Ferreira da Ponte Neto                                     !
-  !Aluno: Victor Ribeiro Carreira                                               !
-  !Este programa visa criar agrupamento de dados de litologias de poços         !
-  !Cálculo de distâncias em um                                                  !
-  !Subrotina Mahalanobis                                                        !
-  !Para usar compilação com flags utilize:                                      !
-  !gfortran -fbounds-check -fbacktrace -Wall -Wextra -pedantic                  ! 
-  !"pasta/subpasta/nomedopragrama.f95" -o nomedoexecutável                      !
-  !+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+  !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
+  !Criação da subrotina do cálculo de distância por Mahalanobis                !
+  !Orientador: Cosme Ferreira da Ponte Neto                                    !
+  !Aluno: Victor Ribeiro Carreira                                              !
+  !Este programa visa criar agrupamento de dados de litologias de poços        !
+  !Cálculo de distâncias em um                                                 !
+  !Subrotina Mahalanobis                                                       !
+  !Para usar compilação com flags utilize:                                     !
+  !gfortran -fbounds-check -fbacktrace -Wall -Wextra -pedantic                 !
+  !"pasta/subpasta/nomedopragrama.f95" -o nomedoexecutável                     !
+  !++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!
 
- 
+
 
                   !++++++++++++++++Tabela de Variáveis+++++++++++++++!
                   !i - contador dimensinal dos vetores               !
@@ -20,32 +20,33 @@ PROGRAM preclassificador
                   !ntc - dimensão dos dados de classificação         !
                   !a - armazena codigo, prof, dens, gama, rho e vel  !
                   !cl(i) - vetor de codigo                           !
-                  !prof(i) - vetor de profundidade                   ! 
-                  !tr(nt,4) - matriz de densidade                    ! 
+                  !prof(i) - vetor de profundidade                   !
+                  !tr(nt,4) - matriz de densidade                    !
                   !tr(i,2) - matriz de raio-gama                     !
                   !tr(i,3) - matriz de resistividade                 !
-                  !tr(i,4) - matriz de velocidade                    !
+                  !tr(i,4) - matriz de velocidade
+                  !lito1
                   !hip(nt,5,9) - hipermatriz com todos os dados      !
                   !--------------------------------------------------!
 
-                   
+
  IMPLICIT NONE
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!! DECLARAÇÃO DAS VARIÁVEIS GLOBAIS !!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!! DECLARAÇÃO DAS VARIÁVEIS GLOBAIS !!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
   INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
-  INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(10,100) 
+  INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(10,100)
 
   INTEGER(KIND=SP):: i, j, ij, nt, ntc, nlito
   INTEGER(KIND=SP), ALLOCATABLE, DIMENSION(:):: ic1, ic2
 
-  REAL(KIND=DP):: a1, a2, a3, a4, a5, a6
-   
+    REAL(KIND=DP):: a1, a2, a3, a4, a5, a6
+
    REAL(KIND=SP):: inicial, final, custocomputacional
    REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl
-   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr
+   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2
    REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:,:)::hip
 
    CHARACTER(LEN=80):: rocha
@@ -57,12 +58,12 @@ PROGRAM preclassificador
 
    ! TYPE litologia
      !INTEGER:: COMP
-    ! CHARACTER(LEN= 80) :: PALAVRA 
+    ! CHARACTER(LEN= 80) :: PALAVRA
     !END TYPE litologia
 
- TYPE(lixo):: cabecalho, branco 
+ TYPE(lixo):: cabecalho, branco
  !TYPE(litologia):: rocha
- 
+
 
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!CRIANDO OS ARQUIVOS E OS FORMATOS  !!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -84,14 +85,14 @@ PROGRAM preclassificador
  !!!!!!!!!!!!!!!!!!!!!!!!!!ARMAZENANDO AS VARIÁVEIS DE ENTRADA !!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  OPEN(1,file='dados_sint_T1.txt') ! entrada do programa 			
+  OPEN(1,file='dados_sint_T1.txt') ! entrada do programa
    ! Leitura do arquivo de treinamento
 
    READ(1,15) cabecalho    ! leitura do cabeçalho
    !WRITE(6,15) cabecalho
    READ(1,15) branco    ! linha em branco abaixo do cabeçalho
    !WRITE(6,15) branco
-   
+
     ij=1
      DO WHILE (.TRUE.)
      READ(1,*,end=6) rocha, a1, a2, a3, a4, a5, a6
@@ -106,22 +107,22 @@ PROGRAM preclassificador
  ! !!!!!!!!!!!!!
  ! !        Leitura do arquivo de dados a serem classificados
 
-  
+
  OPEN(2,file='dados_sint_c1.txt')
   READ(2,15) cabecalho    ! cabeçalho
   !WRITE(6,15) cabecalho
   READ(2,15) branco    ! linha em branco abaixo do cabeçalho
   !WRITE(6,15) branco
-  
+
    ij=1
    DO WHILE (.TRUE.)
     READ(2,*,END=7) rocha,a1,a2,a3,a4,a5,a6
     ij=ij+1
-   END DO 
+   END DO
    7 CONTINUE
  CLOSE(2)
 
-   ntc=ij-1 
+   ntc=ij-1
    WRITE(6,*) "n de dados a serem classificados->",ntc
 
 
@@ -137,12 +138,12 @@ PROGRAM preclassificador
    ic2=0
 
   OPEN(1,file='dados_sint_T1.txt')
-    
-    READ(1,15) cabecalho    ! cabeçalho 
+
+    READ(1,15) cabecalho    ! cabeçalho
     !WRITE(6,15) cabecalho
     READ(1,15) branco    ! linha em branco abaixo do cabeçalho
     !WRITE(6,15) branco
-		
+
     DO i=1,nt
      READ(1,*) rocha,cl(i),prof(i),tr(i,1),tr(i,2),tr(i,3),tr(i,4)
     END DO
@@ -151,7 +152,7 @@ PROGRAM preclassificador
 
    ! Preenchendo a hipermatriz
   DO i=1,nt
-    DO j=1,5                         !Bloco reservado para os 5 padrões caixa 
+    DO j=1,5                         !Bloco reservado para os 5 padrões caixa
      IF(cl(i) == j)THEN
       ic1(j)=ic1(j)+1
       hip(ic1(j),1,j)=prof(i)
@@ -160,7 +161,7 @@ PROGRAM preclassificador
       hip(ic1(j),4,j)=tr(i,3)
       hip(ic1(j),5,j)=tr(i,4)
      END IF
-    END DO 
+    END DO
       nlito=450                      !Bloco reservado para o padrão sino
     DO j=1,4
       nlito=nlito+1
@@ -172,18 +173,18 @@ PROGRAM preclassificador
        hip(ic2(j),4,5+j)=tr(i,3)
        hip(ic2(j),5,5+j)=tr(i,4)
       END IF
-    END DO  
+    END DO
                      ! !	print*, " até aqui, tudo bem"
                      ! !	pause
   END DO
 
- ! 	allocate (lito1(ic1(1),4),lito2(1,4))
+    ALLOCATE(lito1(ic1(1),4),lito2(1,4))
 
- !  lito1=0d0
- !  lito2=0d0
+    lito1=0d0
+    lito2=0d0
 
- ! 	print*, 'ic1=',size(ic1,1)
- ! 	print*, 'ic2=',size(ic2,1)
+    PRINT*, 'ic1=',size(ic1,1) !Tamanho das demais litologias
+    PRINT*, 'ic2=',size(ic2,1) !Tamanho da gradação do padrão sino
 
 
 
@@ -235,11 +236,11 @@ PROGRAM preclassificador
  ! !	write(6,15) cab
  ! 	read(2,15) cab    ! linha em branco abaixo do cabeçalho
  ! !	write(6,15) cab
-		
-	
+
+
  !  do i=1,ntc
  ! 	read(2,*) branco,a1,a2,a3,a4,a5,a6
-	
+
  !  end do
  ! 	close(2)
 
@@ -269,20 +270,20 @@ PROGRAM preclassificador
  custocomputacional=final-inicial
  PRINT*, 'Custo Computacional=',custocomputacional, 'segundos'
  PRINT*,' ************ FIM *************'
- 
+
  !CONTAINS
 
-!  SUBROUTINE maha(g11,np1,g22,np2,ndim,dist)      
-	
+!  SUBROUTINE maha(g11,np1,g22,np2,ndim,dist)
+
 !  	subrotina que calcula a distância de mahalanobis entre
-!  	dois agrupamentos de elementos com dimensão ndim 	
+!  	dois agrupamentos de elementos com dimensão ndim
 
 
 ! 	implicit real*8(a-h,o-z)
 
 !  	real*8,intent(in)::g1(np1,ndim),g2(np2,ndim)
 !  	real*8,intent(out)::dist
-!  	integer,intent(in)::np1,np2,ndim 
+!  	integer,intent(in)::np1,np2,ndim
 
 
 !       real*8 g1(np1,ndim),g2(np2,ndim),g1T(ndim,np1),g2T(ndim,np2),&
@@ -294,7 +295,7 @@ PROGRAM preclassificador
 ! 	g1=g11
 ! 	g2=g22
 
-!  	grupo 1	
+!  	grupo 1
 
 ! 	do j=1,ndim
 ! 	soma(j)=0d0
@@ -305,9 +306,9 @@ PROGRAM preclassificador
 
 ! 	do i=1,ndim
 ! 	xm1(i)=soma(i)/dfloat(np1)
-! 	end do	
+! 	end do
 
-!  	grupo 2	
+!  	grupo 2
 
 ! 	do j=1,ndim
 ! 	soma(j)=0d0
@@ -319,7 +320,7 @@ PROGRAM preclassificador
 
 ! 	do i=1,ndim
 ! 	xm2(i)=soma(i)/dfloat(np2)
-! 	end do	
+! 	end do
 
 !  	vetor das diferenças - será escrito sobre a matrizes g1 e g2
 
@@ -333,24 +334,24 @@ PROGRAM preclassificador
 ! 	do i=1,np2
 ! 	g2(i,j)=g2(i,j)-xm2(j)
 ! 	end do
-! 	end do	
+! 	end do
 
 !      --------GRUPO 1 ---------------------
 !  	criando a matriz transposta g1T
 !  	-------------- -------------------
-! 	do i=1,np1    !107 ! número de equações 
+! 	do i=1,np1    !107 ! número de equações
 ! 	do j=1,ndim   !2
 ! 	g1T(j,i)=g1(i,j)
 ! 	end do
 ! 	end do
 !  ----------------------------------------------------
 !  	 - multiplicação de matrizes
-!  	   multiplicação de g1T por g1 
+!  	   multiplicação de g1T por g1
 
 ! 	do k=1,ndim
 ! 	do j=1,ndim
 ! 	cov1(j,k)=0.d0
-! 	do i=1,np1	
+! 	do i=1,np1
 ! 	cov1(j,k)=cov1(j,k)+g1T(j,i)*g1(i,k)
 ! 	end do
 ! 	end do
@@ -377,7 +378,7 @@ PROGRAM preclassificador
 
 !  ---------------------------------------------------
 !  	 - multiplicação de matrizes
-!  	   multiplicação de g2T por g2 
+!  	   multiplicação de g2T por g2
 
 ! 	do k=1,ndim
 ! 	do j=1,ndim
@@ -410,7 +411,7 @@ PROGRAM preclassificador
 
 !  	write(6,*) '======covariância agrupada ======'
 !  	write(6,*) covag(1,1),covag(1,2)
-!  	write(6,*) covag(2,1),covag(2,2)	
+!  	write(6,*) covag(2,1),covag(2,2)
 
 !  	inversao da matriz covag - usando subrotina
 
@@ -439,11 +440,11 @@ PROGRAM preclassificador
 ! 	end do
 
 !  ----------------------------------------------------
-!  	multiplicação de mdT por cov^-1 
+!  	multiplicação de mdT por cov^-1
 !  	 - multiplicação de matrizes
 
-! 	do k=1,ndim	
-! 	do j=1,1	
+! 	do k=1,ndim
+! 	do j=1,1
 ! 	alfa(j,k)=0.d0
 ! 	do i=1,ndim
 ! 	alfa(j,k)=alfa(j,k)+mdT(j,i)*covag(i,k)
@@ -452,7 +453,7 @@ PROGRAM preclassificador
 ! 	end do
 
 !  ----------------------------------------------------
-!  	multiplicação de alfa por md 
+!  	multiplicação de alfa por md
 !  	 - multiplicação de matrizes
 
 ! 	do k=1,1
@@ -472,7 +473,7 @@ PROGRAM preclassificador
 !  ! cccccccccccccccccccccccccc
 
 
-!   SUBROUTINE INVERT(A,i)      
+!   SUBROUTINE INVERT(A,i)
 !       real*8 A(i,i),B(i)
 !       integer i,im,j,k,l
 !       IM=I-1
@@ -486,7 +487,7 @@ PROGRAM preclassificador
 !     4 A(L,I)=-A(L+1,1)*B(I)
 !       DO 5 J=1,I
 !     5 A(I,J)=B(J)
- 
+
 !       RETURN
 !       END
 !   END SUBROUTINE INVERT
