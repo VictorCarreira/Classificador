@@ -198,41 +198,41 @@ PROGRAM preclassificador
 
     WRITE(6,*) '========================'
 
-    DO i=1,ic1(1)
-     WRITE(6,*) 'densidade dos folhelhos=',hip(i,1,1),hip(i,2,1)
-    END DO
+  !   DO i=1,ic1(1)
+  !    WRITE(6,*) 'densidade dos folhelhos=',hip(i,1,1),hip(i,2,1)
+  !   END DO
 
-    WRITE(6,*) '========================'
+  !   WRITE(6,*) '========================'
 
-    DO i=1, ic1(2)
-     WRITE(6,*) 'densidade das dolomitas=',hip(i,1,2),hip(i,2,2)
-    END DO
+  !   DO i=1, ic1(2)
+  !    WRITE(6,*) 'densidade das dolomitas=',hip(i,1,2),hip(i,2,2)
+  !   END DO
 
-    WRITE(6,*) '========================'
+  !   WRITE(6,*) '========================'
 
-    DO i=1,ic1(3)
-     WRITE(6,*) 'densidade dos diabasio=',hip(i,1,3),hip(i,2,3)
-   END DO
+  !   DO i=1,ic1(3)
+  !    WRITE(6,*) 'densidade dos diabasio=',hip(i,1,3),hip(i,2,3)
+  !  END DO
 
-   WRITE(6,*) '========================'
+  !  WRITE(6,*) '========================'
 
-   DO i=1,ic1(4)
-    WRITE(6,*) 'densidade dos conglomerado=',hip(i,1,4),hip(i,2,4)
-   END DO
+  !  DO i=1,ic1(4)
+  !   WRITE(6,*) 'densidade dos conglomerado=',hip(i,1,4),hip(i,2,4)
+  !  END DO
 
-   WRITE(6,*) '========================'
+  !  WRITE(6,*) '========================'
 
-    DO i=1, ic2(1)
-     WRITE(6,*) 'densidade dos congl-emb1=',hip(i,1,6),hip(i,2,6)
-    END DO
+  !   DO i=1, ic2(1)
+  !    WRITE(6,*) 'densidade dos congl-emb1=',hip(i,1,6),hip(i,2,6)
+  !   END DO
 
-   WRITE(6,*) '========================'
+  !  WRITE(6,*) '========================'
 
-    DO i=1, ic2(2)
-     WRITE(6,*) 'densidade dos congl-emb2=',hip(i,1,7),hip(i,2,7)
-    END DO
+  !   DO i=1, ic2(2)
+  !    WRITE(6,*) 'densidade dos congl-emb2=',hip(i,1,7),hip(i,2,7)
+  !   END DO
 
-   WRITE(6,*) '========================'
+  !  WRITE(6,*) '========================'
 
 
 !!!!!!!! ABRINDO O SEGUNDO CONJUNTO DE DADOS
@@ -279,6 +279,7 @@ PROGRAM preclassificador
 
  CONTAINS
 
+!----------------------------------------------------------------------------------------
   SUBROUTINE maha(g11,np1,g22,np2,ndim,dist)
 
 !  	subrotina que calcula a distância de mahalanobis entre
@@ -495,7 +496,9 @@ PROGRAM preclassificador
   dist=dsqrt(d2(1,1))
 
 END SUBROUTINE maha
-!  ! cccccccccccccccccccccccccc
+
+
+!--------------------------------------------------------------------------
 
 
    SUBROUTINE INVERT(A,i)
@@ -517,4 +520,11 @@ END SUBROUTINE maha
 
    END SUBROUTINE INVERT
 
+
+!-------------------------------------------------------------------------
+
+   SUBROUTINE entrada
+
+
+   END SUBROUTINE entrada
 END PROGRAM preclassificador
