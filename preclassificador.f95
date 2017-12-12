@@ -28,6 +28,8 @@ PROGRAM preclassificador
                   !lito1(:,:) - matriz de litologias                 !
                   !lito2(:,:) - matriz do padrão sino                !
                   !hip(nt,5,9) - hipermatriz com todos os dados      !
+                  !ndim - número de dimensões analisadas do modelo   !
+                  !       ou número de propriedades físicas.         !
                   !--------------------------------------------------!
 
 
@@ -40,11 +42,11 @@ PROGRAM preclassificador
   INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
   INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
 
-  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito
+  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim
   INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2
 
-    REAL(KIND=DP):: a1, a2, a3, a4, a5, a6, dist!, ndim
-
+    REAL(KIND=DP):: a1, a2, a3, a4, a5, a6, dist
+    
    REAL(KIND=SP):: inicial, final, custocomputacional
    REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl
    REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2
@@ -64,6 +66,10 @@ PROGRAM preclassificador
 
  TYPE(lixo):: cabecalho, branco
  !TYPE(litologia):: rocha
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
  PRINT*,'************************INÍCIO**************************'
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -104,8 +110,7 @@ PROGRAM preclassificador
        hip(ic2(j),5,5+j)=tr(i,4)
       END IF
     END DO
-                     ! !	print*, " até aqui, tudo bem"
-                     ! !	pause
+                     
   END DO
 
     ALLOCATE(lito1(ic1(1),4),lito2(1,4))
@@ -129,10 +134,14 @@ PROGRAM preclassificador
     DO i=1,4
       WRITE(6,*) 'primeiro dado a ser classificado=', lito2(1,i)
     END DO
-
-
+  
    CALL maha(lito1,ic1(1),lito2,1,4,dist)
    WRITE(6,*) '========================'
+
+  ! automação do calculo de semelhança
+  DO 
+   CALL maha(l)
+  END DO 
 
    WRITE(6,*) 'dist=',dist
    WRITE(6,*) '========================'
@@ -430,6 +439,7 @@ END SUBROUTINE maha
    hip=0d0
    ic1=0
    ic2=0
+   ndim=4
 
   OPEN(1,file='dados_sint_T1.txt')
 
@@ -459,10 +469,11 @@ END SUBROUTINE maha
 
    SUBROUTINE estatistica
 
-       WRITE(6,*) '========================'
+    WRITE(6,*) '========================'
 
     PRINT*, 'ic1=',size(ic1,1) !Tamanho das demais litologias
     PRINT*, 'ic2=',size(ic2,1) !Tamanho da gradação do padrão sino
+    PRINT*,'Dimensão da hipermatriz=',SIZE(hip(:,1,1)),SIZE(hip(1,:,1)),SIZE(hip(1,1,:))
 
 
     WRITE(6,*) '========================'
