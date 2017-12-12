@@ -42,13 +42,13 @@ PROGRAM preclassificador
   INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
   INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
 
-  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim
+  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim, k, kmin
   INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2
 
-    REAL(KIND=DP):: a1, a2, a3, a4, a5, a6, dist
+    REAL(KIND=DP):: a1, a2, a3, a4, a5, a6, dist, dist_min
     
    REAL(KIND=SP):: inicial, final, custocomputacional
-   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl
+   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl , distC
    REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2
    REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:,:)::hip
 
@@ -113,35 +113,45 @@ PROGRAM preclassificador
                      
   END DO
 
-    ALLOCATE(lito1(ic1(1),4),lito2(1,4))
+    ALLOCATE(lito1(ic1(1),4),lito2(1,4),distC(SIZE(hip,3) ) )
 
     lito1=0d0
     lito2=0d0
 
-  CALL estatistica
+  !CALL estatistica
 
-   DO i=1,ic1(1)
-    DO j=1,4
-     lito1(i,j)=hip(i,j+1,1)
-    END DO
-   END DO
-
+! ---- propriedades fisicas do arquivo a ser classificado:
     lito2(1,1)=a3
     lito2(1,2)=a4
     lito2(1,3)=a5
     lito2(1,4)=a6
 
+ ! Loop de cada litotipo (automação das distancias via subroutine maha):
+  DO k=1, SIZE(hip,3) ! = SIZE(hip(1,1,:) )
+    DO i=1,ic1(1)
+     DO j=1,4
+      lito1(i,j)=hip(i,j+1,k)
+     END DO
+    END DO
+
     DO i=1,4
       WRITE(6,*) 'primeiro dado a ser classificado=', lito2(1,i)
     END DO
   
-   CALL maha(lito1,ic1(1),lito2,1,4,dist)
-   WRITE(6,*) '========================'
+    CALL maha(lito1,ic1(1),lito2,1,4,dist)
+    WRITE(6,*) '========================'
 
-  ! automação do calculo de semelhança
-  DO 
-   CALL maha(l)
-  END DO 
+    distC(k) = dist 
+    PRINT*, 'dist_maha =',distC(k),k
+   
+   ENDDO ! loop over k (every lithotype)
+   
+   ! localizando a menor distancia e o respectivo litotipo:
+   kmin = MINLOC(distC,1)
+   dist_min = MINVAL(distC,1)
+ 
+  PRINT*, 'min_maha=',kmin,dist_min
+
 
    WRITE(6,*) 'dist=',dist
    WRITE(6,*) '========================'
@@ -281,9 +291,9 @@ PROGRAM preclassificador
      END DO
    END DO
 
-    WRITE(6,*) '======covariância 2 ======'
-    WRITE(6,*) cov2(1,1),cov2(1,2)
-    WRITE(6,*) cov2(2,1),cov2(2,2)
+   ! WRITE(6,*) '======covariância 2 ======'
+   ! WRITE(6,*) cov2(1,1),cov2(1,2)
+   ! WRITE(6,*) cov2(2,1),cov2(2,2)
 
 
 !  	-------- covariância agrupada------
@@ -295,17 +305,17 @@ PROGRAM preclassificador
      END DO
    END DO
 
-    WRITE(6,*) '======covariância agrupada ======'
-    WRITE(6,*) covag(1,1),covag(1,2)
-    WRITE(6,*) covag(2,1),covag(2,2)
+    !WRITE(6,*) '======covariância agrupada ======'
+    !WRITE(6,*) covag(1,1),covag(1,2)
+    !WRITE(6,*) covag(2,1),covag(2,2)
 
 !  	inversao da matriz covag - usando subrotina
 
    CALL INVERT(covag,ndim)
 
-    WRITE(6,*) '====== inv covariância agrupada ======'
-    WRITE(6,*) covag(1,1),covag(1,2)
-    WRITE(6,*) covag(2,1),covag(2,2)
+    !WRITE(6,*) '====== inv covariância agrupada ======'
+    !WRITE(6,*) covag(1,1),covag(1,2)
+    !WRITE(6,*) covag(2,1),covag(2,2)
 
 !  	diferenicas médias
 
@@ -355,6 +365,7 @@ PROGRAM preclassificador
 
   dist=dsqrt(d2(1,1))
 
+
 END SUBROUTINE maha
 
 
@@ -362,9 +373,9 @@ END SUBROUTINE maha
 
 
    SUBROUTINE INVERT(A,i)
-
-       real*8 A(i,i),B(i)
-       integer i,im,j,k,l
+      integer i,im,j,k,l
+      real*8 A(i,i),B(i)
+       
        IM=I-1
 
        DO 5 K=1,I
