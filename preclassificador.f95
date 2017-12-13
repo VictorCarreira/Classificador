@@ -71,7 +71,7 @@ PROGRAM preclassificador
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
- PRINT*,'************************INÍCIO**************************'
+ PRINT*,'************************************INÍCIO***********************************'
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!CRIANDO OS ARQUIVOS E OS FORMATOS  !!!!!!!!!!!!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -118,7 +118,7 @@ PROGRAM preclassificador
     lito1=0d0
     lito2=0d0
 
-  !CALL estatistica
+  CALL estatistica
 
 ! ---- propriedades fisicas do arquivo a ser classificado:
     lito2(1,1)=a3
@@ -126,7 +126,7 @@ PROGRAM preclassificador
     lito2(1,3)=a5
     lito2(1,4)=a6
 
- ! Loop de cada litotipo (automação das distancias via subroutine maha):
+ ! Laço de cada litotipo (automação das distancias via subroutine maha):
   DO k=1, SIZE(hip,3) ! = SIZE(hip(1,1,:) )
     DO i=1,ic1(1)
      DO j=1,4
@@ -134,32 +134,33 @@ PROGRAM preclassificador
      END DO
     END DO
 
-    DO i=1,4
-      WRITE(6,*) 'primeiro dado a ser classificado=', lito2(1,i)
-    END DO
+    !DO i=1,4
+    !  WRITE(6,*) 'primeiro dado a ser classificado=', lito2(1,i)
+    !END DO
   
     CALL maha(lito1,ic1(1),lito2,1,4,dist)
-    WRITE(6,*) '========================'
+    WRITE(6,*) '======================='
 
     distC(k) = dist 
     PRINT*, 'dist_maha =',distC(k),k
    
-   ENDDO ! loop over k (every lithotype)
+  ENDDO ! laço over k (every lithotype)
    
    ! localizando a menor distancia e o respectivo litotipo:
-   kmin = MINLOC(distC,1)
+   kmin = MINLOC(distC,1) !Retorna o menor valor de distC
    dist_min = MINVAL(distC,1)
- 
-  PRINT*, 'min_maha=',kmin,dist_min
+
+  WRITE(6,*) '========================'
+  PRINT*, 'Menor distância de maha=',dist_min,kmin
 
 
-   WRITE(6,*) 'dist=',dist
-   WRITE(6,*) '========================'
+  ! WRITE(6,*) 'dist=',dist
+   WRITE(6,*) '======================================================'
    CALL cpu_time(final)
    custocomputacional=final-inicial
    PRINT*, 'Custo Computacional=',custocomputacional, 'segundos'
    
- PRINT*,'************************ FIM ***************************'
+ PRINT*,'********************************* FIM ***************************************'
 
  CONTAINS
 
