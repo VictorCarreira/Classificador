@@ -42,14 +42,23 @@ PROGRAM preclassificador
   INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
   INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
 
+<<<<<<< HEAD
   INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim, k, it!, kmin
   INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2, kmin
+=======
+  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim, k, kmin
+  INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2
+>>>>>>> 421d298653545ee314c93bda663f9ab17dad8f30
 
     REAL(KIND=DP):: a1, a2, a3, a4, a5, a6, dist, dist_min
     
    REAL(KIND=SP):: inicial, final, custocomputacional
    REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl , distC
+<<<<<<< HEAD
    REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2, dadosC
+=======
+   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2
+>>>>>>> 421d298653545ee314c93bda663f9ab17dad8f30
    REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:,:)::hip
 
    CHARACTER(LEN=80):: rocha
@@ -119,6 +128,7 @@ PROGRAM preclassificador
     lito2=0d0
 
   CALL estatistica
+<<<<<<< HEAD
 
 
 do it=1,ntc
@@ -161,6 +171,43 @@ end do
  ! PRINT*, 'Menor distância de maha=',dist_min,kmin
 
 
+=======
+
+! ---- propriedades fisicas do arquivo a ser classificado:
+    lito2(1,1)=a3
+    lito2(1,2)=a4
+    lito2(1,3)=a5
+    lito2(1,4)=a6
+
+ ! Laço de cada litotipo (automação das distancias via subroutine maha):
+  DO k=1, SIZE(hip,3) ! = SIZE(hip(1,1,:) )
+    DO i=1,ic1(1)
+     DO j=1,4
+      lito1(i,j)=hip(i,j+1,k)
+     END DO
+    END DO
+
+    !DO i=1,4
+    !  WRITE(6,*) 'primeiro dado a ser classificado=', lito2(1,i)
+    !END DO
+  
+    CALL maha(lito1,ic1(1),lito2,1,4,dist)
+    WRITE(6,*) '======================='
+
+    distC(k) = dist 
+    PRINT*, 'dist_maha =',distC(k),k
+   
+  ENDDO ! laço over k (every lithotype)
+   
+   ! localizando a menor distancia e o respectivo litotipo:
+   kmin = MINLOC(distC,1) !Retorna o menor valor de distC
+   dist_min = MINVAL(distC,1)
+
+  WRITE(6,*) '========================'
+  PRINT*, 'Menor distância de maha=',dist_min,kmin
+
+
+>>>>>>> 421d298653545ee314c93bda663f9ab17dad8f30
   ! WRITE(6,*) 'dist=',dist
    WRITE(6,*) '======================================================'
    CALL cpu_time(final)
@@ -448,19 +495,27 @@ END SUBROUTINE maha
    WRITE(6,*) "n de dados a serem classificados->",ntc
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 421d298653545ee314c93bda663f9ab17dad8f30
  ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 
+<<<<<<< HEAD
    ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9),ic1(5),ic2(4),kmin(ntc),dadosC(ntc,4))
 
+=======
+   ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9),ic1(5), ic2(4))
+>>>>>>> 421d298653545ee314c93bda663f9ab17dad8f30
 
 
    hip=0d0
    ic1=0
    ic2=0
    ndim=4
+<<<<<<< HEAD
    dadosC=0d0
 
 OPEN(2,file='dados_sint_c1.txt')
@@ -476,6 +531,8 @@ dadosC(i,2)=a4
 dadosC(i,3)=a5
 dadosC(i,4)=a6
 end do 
+=======
+>>>>>>> 421d298653545ee314c93bda663f9ab17dad8f30
 
   OPEN(1,file='dados_sint_T1.txt')
 
