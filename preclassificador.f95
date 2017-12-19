@@ -116,16 +116,7 @@ PROGRAM preclassificador
 
   !Criando um arquivo de saída
   OPEN(2,file='Semelhança.txt')
-  !10 FORMAT(A8, 8x, O1, 11x, O1, 3x, 4(ES1.2E2, 3x))
-  !11 FORMAT(4(ES12.4E3,2x))
-  !12 FORMAT(I3,2x,3(f6.2,2x))
-  !13 FORMAT(I2,3x,I10,2x,4(ES9.2E2,2x))
-  !14 FORMAT(A12,2x,I3,2x,I10,2x,4(ES9.2E2,2x))
-  !15 FORMAT(A9,5x,A6,6x,A4,2x,A4,7x,A4,7x,A3,8x,A3)
-  !16 FORMAT(A11,8(ES9.2E3))
-  !17 FORMAT(A30,2x,ES12.4E3)
-  !18 FORMAT(2(f6.2,2x),2x,A11,2x,ES12.4E3)
-  20 FORMAT(f8.4,5x,I8)
+  20 FORMAT(f12.4,5x,I8)
 
 DO it=1,ntc
 
