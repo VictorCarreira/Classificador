@@ -28,6 +28,8 @@ PROGRAM preclassificador
                   !lito1(:,:) - matriz de litologias                 !
                   !lito2(:,:) - matriz do padrão sino                !
                   !hip(nt,5,9) - hipermatriz com todos os dados      !
+                  !ndim - número de dimensões analisadas do modelo   !
+                  !       ou número de propriedades físicas.         !
                   !--------------------------------------------------!
 
 
@@ -40,14 +42,14 @@ PROGRAM preclassificador
   INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
   INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
 
-  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito
-  INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2
+  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim, k, it!, kmin
+  INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2, kmin
 
-    REAL(KIND=DP):: a1, a2, a3, a4, a5, a6, dist!, ndim
-
+    REAL(KIND=DP):: a1, a2, a3, a4, a5, a6, dist, dist_min
+    
    REAL(KIND=SP):: inicial, final, custocomputacional
-   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl
-   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2
+   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl , distC
+   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2, dadosC
    REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:,:)::hip
 
    CHARACTER(LEN=80):: rocha
@@ -65,90 +67,23 @@ PROGRAM preclassificador
  TYPE(lixo):: cabecalho, branco
  !TYPE(litologia):: rocha
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+ PRINT*,'************************************INÍCIO***********************************'
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!CRIANDO OS ARQUIVOS E OS FORMATOS  !!!!!!!!!!!!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  CALL cpu_time(inicial)
 
- ! Aqui são os formatos criados para edição dos arquivos de entrada e de saída
- !10 FORMAT(A8, 8x, O1, 11x, O1, 3x, 4(ES1.2E2, 3x))
- !11 FORMAT(4(ES12.4E3,2x))
- !12 FORMAT(I3,2x,3(f6.2,2x))
- !13 FORMAT(I2,3x,I10,2x,4(ES9.2E2,2x))
- !14 FORMAT(A12,2x,I3,2x,I10,2x,4(ES9.2E2,2x))
-  15 FORMAT(A9,5x,A6,6x,A4,2x,A4,7x,A4,7x,A3,8x,A3)
- !16 FORMAT(A11,8(ES9.2E3))
- !17 FORMAT(A30,2x,ES12.4E3)
- !18 FORMAT(2(f6.2,2x),2x,A11,2x,ES12.4E3)
+
 
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!!!!!!!!!!ARMAZENANDO AS VARIÁVEIS DE ENTRADA !!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  OPEN(1,file='dados_sint_T1.txt') ! entrada do programa
-   ! Leitura do arquivo de treinamento
-
-   READ(1,15) cabecalho    ! leitura do cabeçalho
-   !WRITE(6,15) cabecalho
-   READ(1,15) branco    ! linha em branco abaixo do cabeçalho
-   !WRITE(6,15) branco
-
-    ij=1
-     DO WHILE (.TRUE.)
-     READ(1,*,end=6) rocha, a1, a2, a3, a4, a5, a6
-     ij=ij+1
-     END DO
-     6 CONTINUE
-  CLOSE(1)
-
-   nt=ij-1
-  WRITE(6,*) "n de dados de treinamento->",nt
-
- ! !!!!!!!!!!!!!
- ! !        Leitura do arquivo de dados a serem classificados
-
-
- OPEN(2,file='dados_sint_c1.txt')
-  READ(2,15) cabecalho    ! cabeçalho
-  !WRITE(6,15) cabecalho
-  READ(2,15) branco    ! linha em branco abaixo do cabeçalho
-  !WRITE(6,15) branco
-
-   ij=1
-   DO WHILE (.TRUE.)
-    READ(2,*,END=7) rocha,a1,a2,a3,a4,a5,a6
-    ij=ij+1
-   END DO
-   7 CONTINUE
- CLOSE(2)
-
-   ntc=ij-1
-   WRITE(6,*) "n de dados a serem classificados->",ntc
-
-
- ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
-   ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9),ic1(5), ic2(4))
-
-
-   hip=0d0
-   ic1=0
-   ic2=0
-
-  OPEN(1,file='dados_sint_T1.txt')
-
-    READ(1,15) cabecalho    ! cabeçalho
-    !WRITE(6,15) cabecalho
-    READ(1,15) branco    ! linha em branco abaixo do cabeçalho
-    !WRITE(6,15) branco
-
-    DO i=1,nt
-     READ(1,*) rocha,cl(i),prof(i),tr(i,1),tr(i,2),tr(i,3),tr(i,4)
-    END DO
-  CLOSE(1)
+ CALL entrada
 
 
    ! Preenchendo a hipermatriz
@@ -175,110 +110,68 @@ PROGRAM preclassificador
        hip(ic2(j),5,5+j)=tr(i,4)
       END IF
     END DO
-                     ! !	print*, " até aqui, tudo bem"
-                     ! !	pause
+                     
   END DO
 
-    ALLOCATE(lito1(ic1(1),4),lito2(1,4))
+    ALLOCATE(lito1(ic1(1),4),lito2(1,4),distC(SIZE(hip,3) ) )
 
     lito1=0d0
     lito2=0d0
 
-    WRITE(6,*) '========================'
-
-    PRINT*, 'ic1=',size(ic1,1) !Tamanho das demais litologias
-    PRINT*, 'ic2=',size(ic2,1) !Tamanho da gradação do padrão sino
+  CALL estatistica
 
 
-    WRITE(6,*) '========================'
+do it=1,ntc
 
-    WRITE(6,*) 'n de folhelhos=',ic1(1)
-    WRITE(6,*) 'n de dolomitas=',ic1(2)
-    WRITE(6,*) 'n de congl-emb1=',ic2(1)
+! ---- propriedades fisicas do arquivo a ser classificado:
+    lito2(1,1)=dadosC(it,1)
+    lito2(1,2)=dadosC(it,2)
+    lito2(1,3)=dadosC(it,3)
+    lito2(1,4)=dadosC(it,4)
 
-    WRITE(6,*) '========================'
-
+ ! Laço de cada litotipo (automação das distancias via subroutine maha):
+  DO k=1, SIZE(hip,3) ! = SIZE(hip(1,1,:) )
     DO i=1,ic1(1)
-     WRITE(6,*) 'densidade dos folhelhos=',hip(i,1,1),hip(i,2,1)
+     DO j=1,4
+      lito1(i,j)=hip(i,j+1,k)
+     END DO
     END DO
 
-    WRITE(6,*) '========================'
+    !DO i=1,4
+    !  WRITE(6,*) 'primeiro dado a ser classificado=', lito2(1,i)
+    !END DO
+  
+    CALL maha(lito1,ic1(1),lito2,1,4,dist)
+ !   WRITE(6,*) '======================='
 
-    DO i=1, ic1(2)
-     WRITE(6,*) 'densidade das dolomitas=',hip(i,1,2),hip(i,2,2)
-    END DO
+    distC(k) = dist 
+    !PRINT*, 'dist_maha =',distC(k),k
+   
+  ENDDO ! laço over k (every lithotype)
+   
+   ! localizando a menor distancia e o respectivo litotipo:
+   kmin(it) = MINLOC(distC,1) !Retorna o menor valor de distC
+   dist_min = MINVAL(distC,1)
 
-    WRITE(6,*) '========================'
+print*,'it=', it, 'indice=',kmin(it), 'distancia=',dist
 
-    DO i=1,ic1(3)
-     WRITE(6,*) 'densidade dos diabasio=',hip(i,1,3),hip(i,2,3)
-   END DO
+end do
 
-   WRITE(6,*) '========================'
-
-   DO i=1,ic1(4)
-    WRITE(6,*) 'densidade dos conglomerado=',hip(i,1,4),hip(i,2,4)
-   END DO
-
-   WRITE(6,*) '========================'
-
-    DO i=1, ic2(1)
-     WRITE(6,*) 'densidade dos congl-emb1=',hip(i,1,6),hip(i,2,6)
-    END DO
-
-   WRITE(6,*) '========================'
-
-    DO i=1, ic2(2)
-     WRITE(6,*) 'densidade dos congl-emb2=',hip(i,1,7),hip(i,2,7)
-    END DO
-
-   WRITE(6,*) '========================'
+  !WRITE(6,*) '========================'
+ ! PRINT*, 'Menor distância de maha=',dist_min,kmin
 
 
-!!!!!!!! ABRINDO O SEGUNDO CONJUNTO DE DADOS
-
-  ! open(2,file='dados_sint_c1.txt')
-
-  !  read(2,15) cabecalho    ! cabeçalho
-      !write(6,15) cabecalho
-  !  read(2,15) branco   ! linha em branco abaixo do cabeçalho
-      !write(6,15) branco
-
-
-  !  do i=1,ntc
-  !    read(2,*) branco,a1,a2,a3,a4,a5,a6
-  !  end do
-    !CLOSE(2)
-
-
-   DO i=1,ic1(1)
-    DO j=1,4
-     lito1(i,j)=hip(i,j+1,1)
-    END DO
-   END DO
-
-    lito2(1,1)=a3
-    lito2(1,2)=a4
-    lito2(1,3)=a5
-    lito2(1,4)=a6
-
-    DO i=1,4
-      WRITE(6,*) 'primeiro dado a ser classificado=', lito2(1,i)
-    END DO
-
-
-   CALL maha(lito1,ic1(1),lito2,1,4,dist)
-   WRITE(6,*) '========================'
-
-   WRITE(6,*) 'dist=',dist
-   WRITE(6,*) '========================'
+  ! WRITE(6,*) 'dist=',dist
+   WRITE(6,*) '======================================================'
    CALL cpu_time(final)
    custocomputacional=final-inicial
    PRINT*, 'Custo Computacional=',custocomputacional, 'segundos'
-   PRINT*,' ************ FIM *************'
+   
+ PRINT*,'********************************* FIM ***************************************'
 
  CONTAINS
 
+!----------------------------------------------------------------------------------------
   SUBROUTINE maha(g11,np1,g22,np2,ndim,dist)
 
 !  	subrotina que calcula a distância de mahalanobis entre
@@ -302,20 +195,6 @@ PROGRAM preclassificador
     ALLOCATE(g1(np1,ndim),g2(np2,ndim),g1T(ndim,np1),g2T(ndim,np2),&
     cov1(ndim,ndim),cov2(ndim,ndim),covag(ndim,ndim),md(ndim,1),&
     mdT(1,ndim),alfa(1,ndim),d2(1,1))
-
-  !implicit real*8(a-h,o-z)
-
-    !real*8,intent(in)::g1(np1,ndim),g2(np2,ndim)
-  !  real*8,intent(out)::dist
-  !  integer,intent(in)::np1,np2,ndim
-  !  integer::k
-
-
-  !  real*8 g1(np1,ndim),g2(np2,ndim),g1T(ndim,np1),g2T(ndim,np2),&
-  !  cov1(ndim,ndim),cov2(ndim,ndim),covag(ndim,ndim),soma(ndim),&
-  !  xm1(ndim),xm2(ndim),g22(np2,ndim),&
-  !  md(ndim,1),mdT(1,ndim),alfa(1,ndim),d2(1,1),g11(np1,ndim)
-
 
     g1=g11
     g2=g22
@@ -420,9 +299,9 @@ PROGRAM preclassificador
      END DO
    END DO
 
-    WRITE(6,*) '======covariância 2 ======'
-    WRITE(6,*) cov2(1,1),cov2(1,2)
-    WRITE(6,*) cov2(2,1),cov2(2,2)
+   ! WRITE(6,*) '======covariância 2 ======'
+   ! WRITE(6,*) cov2(1,1),cov2(1,2)
+   ! WRITE(6,*) cov2(2,1),cov2(2,2)
 
 
 !  	-------- covariância agrupada------
@@ -434,17 +313,17 @@ PROGRAM preclassificador
      END DO
    END DO
 
-    WRITE(6,*) '======covariância agrupada ======'
-    WRITE(6,*) covag(1,1),covag(1,2)
-    WRITE(6,*) covag(2,1),covag(2,2)
+    !WRITE(6,*) '======covariância agrupada ======'
+    !WRITE(6,*) covag(1,1),covag(1,2)
+    !WRITE(6,*) covag(2,1),covag(2,2)
 
 !  	inversao da matriz covag - usando subrotina
 
    CALL INVERT(covag,ndim)
 
-    WRITE(6,*) '====== inv covariância agrupada ======'
-    WRITE(6,*) covag(1,1),covag(1,2)
-    WRITE(6,*) covag(2,1),covag(2,2)
+    !WRITE(6,*) '====== inv covariância agrupada ======'
+    !WRITE(6,*) covag(1,1),covag(1,2)
+    !WRITE(6,*) covag(2,1),covag(2,2)
 
 !  	diferenicas médias
 
@@ -494,14 +373,17 @@ PROGRAM preclassificador
 
   dist=dsqrt(d2(1,1))
 
+
 END SUBROUTINE maha
-!  ! cccccccccccccccccccccccccc
+
+
+!--------------------------------------------------------------------------
 
 
    SUBROUTINE INVERT(A,i)
-
-       real*8 A(i,i),B(i)
-       integer i,im,j,k,l
+      integer i,im,j,k,l
+      real*8 A(i,i),B(i)
+       
        IM=I-1
 
        DO 5 K=1,I
@@ -517,4 +399,163 @@ END SUBROUTINE maha
 
    END SUBROUTINE INVERT
 
+
+!-------------------------------------------------------------------------
+
+   SUBROUTINE entrada
+   
+
+
+
+  OPEN(1,file='dados_sint_T1.txt') ! entrada do programa
+   ! Leitura do arquivo de treinamento
+
+   READ(1,15) cabecalho    ! leitura do cabeçalho
+   !WRITE(6,15) cabecalho
+   READ(1,15) branco    ! linha em branco abaixo do cabeçalho
+   !WRITE(6,15) branco
+
+    ij=1
+     DO WHILE (.TRUE.)
+     READ(1,*,end=6) rocha, a1, a2, a3, a4, a5, a6
+     ij=ij+1
+     END DO
+     6 CONTINUE
+  CLOSE(1)
+
+   nt=ij-1
+  WRITE(6,*) "n de dados de treinamento->",nt
+
+ ! !!!!!!!!!!!!!
+ ! !        Leitura do arquivo de dados a serem classificados
+
+
+ OPEN(2,file='dados_sint_c1.txt')
+  READ(2,15) cabecalho    ! cabeçalho
+  !WRITE(6,15) cabecalho
+  READ(2,15) branco    ! linha em branco abaixo do cabeçalho
+  !WRITE(6,15) branco
+
+   ij=1
+   DO WHILE (.TRUE.)
+    READ(2,*,END=7) rocha,a1,a2,a3,a4,a5,a6
+    ij=ij+1
+   END DO
+   7 CONTINUE
+ CLOSE(2)
+
+   ntc=ij-1
+   WRITE(6,*) "n de dados a serem classificados->",ntc
+
+
+
+ ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+   ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9),ic1(5),ic2(4),kmin(ntc),dadosC(ntc,4))
+
+
+
+   hip=0d0
+   ic1=0
+   ic2=0
+   ndim=4
+   dadosC=0d0
+
+OPEN(2,file='dados_sint_c1.txt')
+READ(2,15) cabecalho    ! cabeçalho
+!WRITE(6,15) cabecalho
+READ(2,15) branco    ! linha em branco abaixo do cabeçalho
+!WRITE(6,15) branco
+
+do i=1,ntc
+read(2,*) rocha,a1,a2,a3,a4,a5,a6
+dadosC(i,1)=a3
+dadosC(i,2)=a4
+dadosC(i,3)=a5
+dadosC(i,4)=a6
+end do 
+
+  OPEN(1,file='dados_sint_T1.txt')
+
+    READ(1,15) cabecalho    ! cabeçalho
+    !WRITE(6,15) cabecalho
+    READ(1,15) branco    ! linha em branco abaixo do cabeçalho
+    !WRITE(6,15) branco
+
+    DO i=1,nt
+     READ(1,*) rocha,cl(i),prof(i),tr(i,1),tr(i,2),tr(i,3),tr(i,4)
+    END DO
+  CLOSE(1)
+
+   ! Aqui são os formatos criados para edição dos arquivos de entrada e de saída
+   !10 FORMAT(A8, 8x, O1, 11x, O1, 3x, 4(ES1.2E2, 3x))
+   !11 FORMAT(4(ES12.4E3,2x))
+   !12 FORMAT(I3,2x,3(f6.2,2x))
+   !13 FORMAT(I2,3x,I10,2x,4(ES9.2E2,2x))
+   !14 FORMAT(A12,2x,I3,2x,I10,2x,4(ES9.2E2,2x))
+    15 FORMAT(A9,5x,A6,6x,A4,2x,A4,7x,A4,7x,A3,8x,A3)
+   !16 FORMAT(A11,8(ES9.2E3))
+   !17 FORMAT(A30,2x,ES12.4E3)
+   !18 FORMAT(2(f6.2,2x),2x,A11,2x,ES12.4E3)
+
+   END SUBROUTINE entrada
+!-----------------------------------------------------------------------------------------
+
+   SUBROUTINE estatistica
+
+    WRITE(6,*) '========================'
+
+    PRINT*, 'ic1=',size(ic1,1) !Tamanho das demais litologias
+    PRINT*, 'ic2=',size(ic2,1) !Tamanho da gradação do padrão sino
+    PRINT*,'Dimensão da hipermatriz=',SIZE(hip(:,1,1)),SIZE(hip(1,:,1)),SIZE(hip(1,1,:))
+
+
+    WRITE(6,*) '========================'
+
+    WRITE(6,*) 'n de folhelhos=',ic1(1)
+    WRITE(6,*) 'n de dolomitas=',ic1(2)
+    WRITE(6,*) 'n de congl-emb1=',ic2(1)
+
+    WRITE(6,*) '========================'
+
+  !   DO i=1,ic1(1)
+  !    WRITE(6,*) 'densidade dos folhelhos=',hip(i,1,1),hip(i,2,1)
+  !   END DO
+
+  !   WRITE(6,*) '========================'
+
+  !   DO i=1, ic1(2)
+  !    WRITE(6,*) 'densidade das dolomitas=',hip(i,1,2),hip(i,2,2)
+  !   END DO
+
+  !   WRITE(6,*) '========================'
+
+  !   DO i=1,ic1(3)
+  !    WRITE(6,*) 'densidade dos diabasio=',hip(i,1,3),hip(i,2,3)
+  !  END DO
+
+  !  WRITE(6,*) '========================'
+
+  !  DO i=1,ic1(4)
+  !   WRITE(6,*) 'densidade dos conglomerado=',hip(i,1,4),hip(i,2,4)
+  !  END DO
+
+  !  WRITE(6,*) '========================'
+
+  !   DO i=1, ic2(1)
+  !    WRITE(6,*) 'densidade dos congl-emb1=',hip(i,1,6),hip(i,2,6)
+  !   END DO
+
+  !  WRITE(6,*) '========================'
+
+  !   DO i=1, ic2(2)
+  !    WRITE(6,*) 'densidade dos congl-emb2=',hip(i,1,7),hip(i,2,7)
+  !   END DO
+
+  !  WRITE(6,*) '========================'
+    
+   END SUBROUTINE estatistica  
+   
 END PROGRAM preclassificador
