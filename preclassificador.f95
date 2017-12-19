@@ -42,45 +42,30 @@ PROGRAM preclassificador
   INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
   INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
 
-<<<<<<< HEAD
-  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim, k, it!, kmin
+  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim, k, it
+  REAL(KIND=DP):: a1, a2, a3, a4, a5, a6, dist, dist_min
+  REAL(KIND=SP):: inicial, final, custocomputacional
+
   INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2, kmin
-=======
-  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim, k, kmin
-  INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2
->>>>>>> 421d298653545ee314c93bda663f9ab17dad8f30
+  REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl , distC
+  REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2, dadosC
+  REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:,:)::hip
 
-    REAL(KIND=DP):: a1, a2, a3, a4, a5, a6, dist, dist_min
-    
-   REAL(KIND=SP):: inicial, final, custocomputacional
-   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl , distC
-<<<<<<< HEAD
-   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2, dadosC
-=======
-   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2
->>>>>>> 421d298653545ee314c93bda663f9ab17dad8f30
-   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:,:)::hip
-
-   CHARACTER(LEN=80):: rocha
+  CHARACTER(LEN=80):: rocha
 
     TYPE lixo
-     !INTEGER:: COMP
      CHARACTER(LEN= 15) :: PALAVRA(7)
     END TYPE lixo
 
-   ! TYPE litologia
-     !INTEGER:: COMP
-    ! CHARACTER(LEN= 80) :: PALAVRA
-    !END TYPE litologia
+  TYPE(lixo):: cabecalho, branco
 
- TYPE(lixo):: cabecalho, branco
- !TYPE(litologia):: rocha
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+ PRINT*,'*****************************************************************************'
  PRINT*,'************************************INÍCIO***********************************'
+ PRINT*,'*****************************************************************************'
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!CRIANDO OS ARQUIVOS E OS FORMATOS  !!!!!!!!!!!!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -119,7 +104,7 @@ PROGRAM preclassificador
        hip(ic2(j),5,5+j)=tr(i,4)
       END IF
     END DO
-                     
+
   END DO
 
     ALLOCATE(lito1(ic1(1),4),lito2(1,4),distC(SIZE(hip,3) ) )
@@ -128,10 +113,21 @@ PROGRAM preclassificador
     lito2=0d0
 
   CALL estatistica
-<<<<<<< HEAD
 
+  !Criando um arquivo de saída
+  OPEN(2,file='Semelhança.txt')
+  !10 FORMAT(A8, 8x, O1, 11x, O1, 3x, 4(ES1.2E2, 3x))
+  !11 FORMAT(4(ES12.4E3,2x))
+  !12 FORMAT(I3,2x,3(f6.2,2x))
+  !13 FORMAT(I2,3x,I10,2x,4(ES9.2E2,2x))
+  !14 FORMAT(A12,2x,I3,2x,I10,2x,4(ES9.2E2,2x))
+  !15 FORMAT(A9,5x,A6,6x,A4,2x,A4,7x,A4,7x,A3,8x,A3)
+  !16 FORMAT(A11,8(ES9.2E3))
+  !17 FORMAT(A30,2x,ES12.4E3)
+  !18 FORMAT(2(f6.2,2x),2x,A11,2x,ES12.4E3)
+  20 FORMAT(f8.4,5x,I8)
 
-do it=1,ntc
+DO it=1,ntc
 
 ! ---- propriedades fisicas do arquivo a ser classificado:
     lito2(1,1)=dadosC(it,1)
@@ -150,28 +146,24 @@ do it=1,ntc
     !DO i=1,4
     !  WRITE(6,*) 'primeiro dado a ser classificado=', lito2(1,i)
     !END DO
-  
+
     CALL maha(lito1,ic1(1),lito2,1,4,dist)
  !   WRITE(6,*) '======================='
 
-    distC(k) = dist 
+    distC(k) = dist
     !PRINT*, 'dist_maha =',distC(k),k
-   
+
   ENDDO ! laço over k (every lithotype)
-   
+
    ! localizando a menor distancia e o respectivo litotipo:
    kmin(it) = MINLOC(distC,1) !Retorna o menor valor de distC
    dist_min = MINVAL(distC,1)
 
 print*,'it=', it, 'indice=',kmin(it), 'distancia=',dist
+WRITE(2,20) dist, kmin(it) ! Escreve o arquivo de saída semelhança
 
-end do
+END DO
 
-  !WRITE(6,*) '========================'
- ! PRINT*, 'Menor distância de maha=',dist_min,kmin
-
-
-=======
 
 ! ---- propriedades fisicas do arquivo a ser classificado:
     lito2(1,1)=a3
@@ -187,34 +179,31 @@ end do
      END DO
     END DO
 
-    !DO i=1,4
-    !  WRITE(6,*) 'primeiro dado a ser classificado=', lito2(1,i)
-    !END DO
-  
+
     CALL maha(lito1,ic1(1),lito2,1,4,dist)
     WRITE(6,*) '======================='
 
-    distC(k) = dist 
+    distC(k) = dist
     PRINT*, 'dist_maha =',distC(k),k
-   
+
   ENDDO ! laço over k (every lithotype)
-   
+
    ! localizando a menor distancia e o respectivo litotipo:
    kmin = MINLOC(distC,1) !Retorna o menor valor de distC
    dist_min = MINVAL(distC,1)
 
   WRITE(6,*) '========================'
-  PRINT*, 'Menor distância de maha=',dist_min,kmin
+  PRINT*, 'Menor distância de maha=',dist_min!,kmin
 
 
->>>>>>> 421d298653545ee314c93bda663f9ab17dad8f30
-  ! WRITE(6,*) 'dist=',dist
    WRITE(6,*) '======================================================'
    CALL cpu_time(final)
    custocomputacional=final-inicial
    PRINT*, 'Custo Computacional=',custocomputacional, 'segundos'
-   
+
+ PRINT*,'*****************************************************************************'
  PRINT*,'********************************* FIM ***************************************'
+ PRINT*,'*****************************************************************************'
 
  CONTAINS
 
@@ -430,7 +419,7 @@ END SUBROUTINE maha
    SUBROUTINE INVERT(A,i)
       integer i,im,j,k,l
       real*8 A(i,i),B(i)
-       
+
        IM=I-1
 
        DO 5 K=1,I
@@ -450,7 +439,7 @@ END SUBROUTINE maha
 !-------------------------------------------------------------------------
 
    SUBROUTINE entrada
-   
+
 
 
 
@@ -495,27 +484,15 @@ END SUBROUTINE maha
    WRITE(6,*) "n de dados a serem classificados->",ntc
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 421d298653545ee314c93bda663f9ab17dad8f30
- ! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
-<<<<<<< HEAD
-   ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9),ic1(5),ic2(4),kmin(ntc),dadosC(ntc,4))
-
-=======
-   ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9),ic1(5), ic2(4))
->>>>>>> 421d298653545ee314c93bda663f9ab17dad8f30
+   ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9),ic1(5),ic2(4),kmin(ntc),&
+   dadosC(ntc,4))
 
 
    hip=0d0
    ic1=0
    ic2=0
    ndim=4
-<<<<<<< HEAD
+
    dadosC=0d0
 
 OPEN(2,file='dados_sint_c1.txt')
@@ -530,9 +507,8 @@ dadosC(i,1)=a3
 dadosC(i,2)=a4
 dadosC(i,3)=a5
 dadosC(i,4)=a6
-end do 
-=======
->>>>>>> 421d298653545ee314c93bda663f9ab17dad8f30
+end do
+
 
   OPEN(1,file='dados_sint_T1.txt')
 
@@ -612,7 +588,7 @@ end do
   !   END DO
 
   !  WRITE(6,*) '========================'
-    
-   END SUBROUTINE estatistica  
-   
+
+   END SUBROUTINE estatistica
+
 END PROGRAM preclassificador
