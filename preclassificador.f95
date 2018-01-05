@@ -112,11 +112,11 @@ PROGRAM preclassificador
     lito1=0d0
     lito2=0d0
 
-  CALL estatistica
+  !CALL estatistica
 
   !Criando um arquivo de saída
-  OPEN(2,file='Semelhança.txt')
-  20 FORMAT(f12.4,5x,I8)
+  OPEN(2,file='SemelhançaC1.txt')
+  20 FORMAT(F15.5,4x,I4,4x,F8.2)
 
 DO it=1,ntc
 
@@ -150,8 +150,8 @@ DO it=1,ntc
    kmin(it) = MINLOC(distC,1) !Retorna o menor valor de distC
    dist_min = MINVAL(distC,1)
 
-print*,'it=', it, 'indice=',kmin(it), 'distancia=',dist
-WRITE(2,20) dist, kmin(it) ! Escreve o arquivo de saída semelhança
+!print*,'it=', it, 'indice=',kmin(it), 'distancia=',dist
+WRITE(2,20) dist, kmin(it), dadosC(it,5) ! Escreve o arquivo de saída semelhança
 
 END DO
 
@@ -180,7 +180,7 @@ END DO
   ENDDO ! laço over k (every lithotype)
 
    ! localizando a menor distancia e o respectivo litotipo:
-   kmin = MINLOC(distC,1) !Retorna o menor valor de distC
+   kmin = MINLOC(distC,1)!Retorna o menor valor de distC
    dist_min = MINVAL(distC,1)
 
   WRITE(6,*) '========================'
@@ -476,7 +476,7 @@ END SUBROUTINE maha
 
 
    ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9),ic1(5),ic2(4),kmin(ntc),&
-   dadosC(ntc,4))
+   dadosC(ntc,5))
 
 
    hip=0d0
@@ -492,13 +492,14 @@ READ(2,15) cabecalho    ! cabeçalho
 READ(2,15) branco    ! linha em branco abaixo do cabeçalho
 !WRITE(6,15) branco
 
-do i=1,ntc
-read(2,*) rocha,a1,a2,a3,a4,a5,a6
-dadosC(i,1)=a3
-dadosC(i,2)=a4
-dadosC(i,3)=a5
-dadosC(i,4)=a6
-end do
+DO i=1,ntc
+ READ(2,*) rocha,a1,a2,a3,a4,a5,a6
+  dadosC(i,1)=a3
+  dadosC(i,2)=a4
+  dadosC(i,3)=a5
+  dadosC(i,4)=a6
+  dadosC(i,5)=a2
+END DO
 
 
   OPEN(1,file='dados_sint_T1.txt')
@@ -581,5 +582,13 @@ end do
   !  WRITE(6,*) '========================'
 
    END SUBROUTINE estatistica
+
+!-------------------------------------------------------------------------------
+
+   SUBROUTINE euclideana()
+     IMPLICIT NONE
+
+
+   END SUBROUTINE euclideana
 
 END PROGRAM preclassificador
