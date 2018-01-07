@@ -42,11 +42,11 @@ PROGRAM preclassificador
   INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
   INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
 
-  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim, k, it
+  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim, k, it, erro
   REAL(KIND=DP):: a1, a2, a3, a4, a5, a6, dist, dist_min
   REAL(KIND=SP):: inicial, final, custocomputacional
 
-  INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2, kmin
+  INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2, kmin, contador
   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl , distC
   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2, dadosC
   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:,:)::hip
@@ -107,16 +107,17 @@ PROGRAM preclassificador
 
   END DO
 
-    ALLOCATE(lito1(ic1(1),4),lito2(1,4),distC(SIZE(hip,3) ) )
+    ALLOCATE(lito1(ic1(1),4),lito2(1,4),distC(SIZE(hip,3) ), contador(ntc) )
 
     lito1=0d0
     lito2=0d0
-
-  !CALL estatistica
+    erro=0d0
+  CALL estatistica
 
   !Criando um arquivo de saída
-  OPEN(2,file='SemelhançaC1.txt')
-  20 FORMAT(F15.5,4x,I4,4x,F8.2)
+  OPEN(2,file='SemelhançaC2.txt')
+  !19 FORMAT(A4, 4X, A4, 4X, A5, 4X, A5)
+  20 FORMAT(F8.1,4x,F15.5,4x,F8.2,4x,I4)
 
 DO it=1,ntc
 
@@ -142,7 +143,7 @@ DO it=1,ntc
  !   WRITE(6,*) '======================='
 
     distC(k) = dist
-    !PRINT*, 'dist_maha =',distC(k),k
+  !  PRINT*, 'dist_maha =',distC(k),k
 
   ENDDO ! laço over k (every lithotype)
 
@@ -150,8 +151,19 @@ DO it=1,ntc
    kmin(it) = MINLOC(distC,1) !Retorna o menor valor de distC
    dist_min = MINVAL(distC,1)
 
+
+
+  !Calculando os erros de classificação
+   IF (dadosC(it,6) /= kmin(it)) THEN
+     erro=erro+1
+   END IF
+
+
+
+
 !print*,'it=', it, 'indice=',kmin(it), 'distancia=',dist
-WRITE(2,20) dist, kmin(it), dadosC(it,5) ! Escreve o arquivo de saída semelhança
+!WRITE(2,19) 'Prof, Maha, Poco, Class'
+WRITE(2,20) dadosC(it,5), dist, dadosC(it,6), kmin(it)  ! Escreve o arquivo de saída semelhança
 
 END DO
 
@@ -172,10 +184,10 @@ END DO
 
 
     CALL maha(lito1,ic1(1),lito2,1,4,dist)
-    WRITE(6,*) '======================='
+    !WRITE(6,*) '======================='
 
     distC(k) = dist
-    PRINT*, 'dist_maha =',distC(k),k
+    !PRINT*, 'dist_maha =',distC(k),k
 
   ENDDO ! laço over k (every lithotype)
 
@@ -183,8 +195,9 @@ END DO
    kmin = MINLOC(distC,1)!Retorna o menor valor de distC
    dist_min = MINVAL(distC,1)
 
-  WRITE(6,*) '========================'
-  PRINT*, 'Menor distância de maha=',dist_min!,kmin
+  !WRITE(6,*) '========================'
+  PRINT*, 'Menor distância de mahalanobis encontrada->',dist_min!,kmin
+  PRINT*,'Erro->',erro
 
 
    WRITE(6,*) '======================================================'
@@ -457,7 +470,7 @@ END SUBROUTINE maha
  ! !        Leitura do arquivo de dados a serem classificados
 
 
- OPEN(2,file='dados_sint_c1.txt')
+ OPEN(2,file='dados_sint_c2.txt')
   READ(2,15) cabecalho    ! cabeçalho
   !WRITE(6,15) cabecalho
   READ(2,15) branco    ! linha em branco abaixo do cabeçalho
@@ -476,7 +489,7 @@ END SUBROUTINE maha
 
 
    ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9),ic1(5),ic2(4),kmin(ntc),&
-   dadosC(ntc,5))
+   dadosC(ntc,6))
 
 
    hip=0d0
@@ -486,7 +499,7 @@ END SUBROUTINE maha
 
    dadosC=0d0
 
-OPEN(2,file='dados_sint_c1.txt')
+OPEN(2,file='dados_sint_c2.txt')
 READ(2,15) cabecalho    ! cabeçalho
 !WRITE(6,15) cabecalho
 READ(2,15) branco    ! linha em branco abaixo do cabeçalho
@@ -499,6 +512,7 @@ DO i=1,ntc
   dadosC(i,3)=a5
   dadosC(i,4)=a6
   dadosC(i,5)=a2
+  dadosC(i,6)=a1
 END DO
 
 
@@ -530,20 +544,20 @@ END DO
 
    SUBROUTINE estatistica
 
-    WRITE(6,*) '========================'
+    !WRITE(6,*) '========================'
 
     PRINT*, 'ic1=',size(ic1,1) !Tamanho das demais litologias
     PRINT*, 'ic2=',size(ic2,1) !Tamanho da gradação do padrão sino
     PRINT*,'Dimensão da hipermatriz=',SIZE(hip(:,1,1)),SIZE(hip(1,:,1)),SIZE(hip(1,1,:))
 
 
-    WRITE(6,*) '========================'
+    !WRITE(6,*) '========================'
 
     WRITE(6,*) 'n de folhelhos=',ic1(1)
     WRITE(6,*) 'n de dolomitas=',ic1(2)
     WRITE(6,*) 'n de congl-emb1=',ic2(1)
 
-    WRITE(6,*) '========================'
+  !  WRITE(6,*) '========================'
 
   !   DO i=1,ic1(1)
   !    WRITE(6,*) 'densidade dos folhelhos=',hip(i,1,1),hip(i,2,1)
