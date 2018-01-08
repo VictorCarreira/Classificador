@@ -599,9 +599,20 @@ END DO
 
 !-------------------------------------------------------------------------------
 
-   SUBROUTINE euclideana()
+   SUBROUTINE euclideana(a1,a2,a3,a4,b1,b2,b3,b4,dist)
      IMPLICIT NONE
+     INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
+     INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
+ 
+     REAL(KIND=DP), INTENT(IN):: a1,a2,a3,a4
+     REAL(KIND=DP), INTENT(IN):: b1,b2,b3,b4
+     REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2, dadosC
+     REAL(KIND=DP),INTENT(OUT):: dist
+ 
+     INTEGER(KIND=SP):: i,j,k
 
+     dist=SQRT((a1-b1)**2+(a2-b2)**2+(a3-b3)**2+(a4-b4)**2)
+     
 
    END SUBROUTINE euclideana
 
