@@ -47,7 +47,7 @@ PROGRAM preclassificador
   REAL(KIND=SP):: inicial, final, custocomputacional
 
   INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2, kmin, contador
-  REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl , distC
+  REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl , distC, eucli
   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2, dadosC
   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:,:)::hip
 
@@ -107,10 +107,11 @@ PROGRAM preclassificador
 
   END DO
 
-    ALLOCATE(lito1(ic1(1),4),lito2(1,4),distC(SIZE(hip,3) ), contador(ntc) )
+    ALLOCATE(lito1(ic1(1),4),lito2(1,4),distC(SIZE(hip,3) ),contador(ntc), eucli(700) )
 
     lito1=0d0
     lito2=0d0
+    eucli=0d0
     erro=0d0
   CALL estatistica
 
@@ -140,6 +141,7 @@ DO it=1,ntc
     !END DO
 
     CALL maha(lito1,ic1(1),lito2,1,4,dist)
+
  !   WRITE(6,*) '======================='
 
     distC(k) = dist
@@ -198,6 +200,9 @@ END DO
   !WRITE(6,*) '========================'
   PRINT*, 'Menor distância de mahalanobis encontrada->',dist_min!,kmin
   PRINT*,'Erro->',erro
+
+  CALL euclideana(lito1,lito2,eucli)
+  PRINT*,eucli
 
 
    WRITE(6,*) '======================================================'
@@ -598,21 +603,24 @@ END DO
    END SUBROUTINE estatistica
 
 !-------------------------------------------------------------------------------
-
-   SUBROUTINE euclideana(a1,a2,a3,a4,b1,b2,b3,b4,dist)
+    SUBROUTINE euclideana(lito1,lito2,eucli)
+   !SUBROUTINE euclideana(a1,a2,a3,a4,b1,b2,b3,b4,dist)
      IMPLICIT NONE
      INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
      INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
- 
-     REAL(KIND=DP), INTENT(IN):: a1,a2,a3,a4
-     REAL(KIND=DP), INTENT(IN):: b1,b2,b3,b4
-     REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2, dadosC
-     REAL(KIND=DP),INTENT(OUT):: dist
- 
-     INTEGER(KIND=SP):: i,j,k
 
-     dist=SQRT((a1-b1)**2+(a2-b2)**2+(a3-b3)**2+(a4-b4)**2)
-     
+     !REAL(KIND=DP), INTENT(IN):: a1,a2,a3,a4
+     !REAL(KIND=DP), INTENT(IN):: b1,b2,b3,b4
+     REAL(KIND=DP), DIMENSION(:,:), INTENT(IN)::lito1, lito2
+     REAL(KIND=DP), DIMENSION(:), INTENT(INOUT):: eucli(700)
+
+     INTEGER(KIND=SP):: i
+
+     !dist=SQRT((a1-b1)**2+(a2-b2)**2+(a3-b3)**2+(a4-b4)**2)
+     DO i=1,700
+     eucli(i)= SQRT((lito1(i,1)**2-lito2(i,1)**2)+(lito1(i,2)**2-lito2(i,2)**2)+ &
+     (lito1(i,3)**2-lito2(i,3)**2)+(lito1(i,4))**2-(lito2(i,4))**2)
+    ENDDO
 
    END SUBROUTINE euclideana
 
