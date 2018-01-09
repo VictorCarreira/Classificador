@@ -29,14 +29,14 @@ lito2=0d0
 DO i=1,5
  DO j=1,5
   lito1(i,j)=1.0
- END DO 
-END DO 
+ END DO
+END DO
 
 DO i=1,5
  DO j=1,5
   lito1(i,j)=1.0
- END DO 
-END DO 
+ END DO
+END DO
 
 
 PRINT*, lito1
@@ -58,7 +58,7 @@ CALL euclideana(lito1,lito2,eucli)
 !*******************************************************************************************!
 
 
-CONTAINS 
+CONTAINS
 
 SUBROUTINE euclideana(lito1,lito2,eucli)
 
@@ -73,26 +73,27 @@ SUBROUTINE euclideana(lito1,lito2,eucli)
 
   nt=SIZE(lito1,1) !nt, número de linhas do arquivo de treinamento
   nc=SIZE(lito2,1) !nc, número de linhas do arquivo de classificação
-  
-  IF (nt>nc)THEN 
+
+  IF (nt>nc)THEN
     n=nt
    ELSE IF (nt<nc) THEN
     n=nc
-    ELSE 
+    ELSE
     n=nt
   END IF
 
 
- 
+ ! Precisa calcular o centróide
+ !o centróide é a média aritimética das propriedades físicas
  DO i=1,n
   DO k=1,SIZE(lito1,2)
-  eucli(i)= SQRT((lito1(i,k)**2-lito2(i,k)**2)) 
-  ENDDO 
+  eucli(i)= SQRT((lito1(i,k)**2-lito2(i,k)**2))
+  ENDDO
 ENDDO
 
 PRINT*,n,nt,nc,SIZE(lito1,2)
 
- 
+
 END SUBROUTINE euclideana
 
 END PROGRAM teste_euclides
