@@ -18,18 +18,18 @@ INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
 INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
 
 INTEGER(KIND=SP):: i,j
-REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: eucli
+REAL(KIND=DP)::eucli
 REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::lito1, lito2
 
-21 FORMAT(5(F4.2,2x))
+21 FORMAT(15(F4.2,2x))
 
-ALLOCATE(lito1(5,5),lito2(5,5))
+ALLOCATE(lito1(5,15),lito2(1,15))
 
 lito1=0d0
 lito2=0d0
 
 DO i=1,5
- DO j=1,5
+ DO j=1,15
    IF(i>j)THEN
      lito1(i,j)=3.42
    ELSE IF(i<j)THEN
@@ -37,11 +37,12 @@ DO i=1,5
    ELSE
      lito1(i,j)=8.98
    ENDIF
+   !lito1(i,j)=2.0
  END DO
 END DO
 
-DO i=1,5
- DO j=1,5
+DO i=1,1
+ DO j=1,15
    IF(i>j)THEN
      lito2(i,j)=7.72
    ELSE IF(i<j)THEN
@@ -49,6 +50,7 @@ DO i=1,5
    ELSE
      lito2(i,j)=0.25
    ENDIF
+   !lito2(i,j)=3.0
  END DO
 END DO
 
@@ -65,7 +67,7 @@ PRINT*,'---------------------'
 
 
 CALL euclideana(lito1,lito2,eucli)
-PRINT*, eucli
+PRINT*,'Distância euclideana=', eucli
 
 
 
@@ -83,43 +85,25 @@ SUBROUTINE euclideana(lito1,lito2,eucli)
  INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
 
  REAL(KIND=DP), DIMENSION(:,:), INTENT(IN)::lito1, lito2
- REAL(KIND=DP), DIMENSION(:), INTENT(INOUT):: eucli
- REAL(KIND=DP)::media1, media2
+ REAL(KIND=DP), INTENT(OUT):: eucli
+ REAL(KIND=DP)::media1
 
- INTEGER(KIND=SP):: nt, nc, n!, k
+ INTEGER(KIND=SP):: k
 
-  nt=SIZE(lito1,1) !nt, número de linhas do arquivo de treinamento
-  nc=SIZE(lito2,1) !nc, número de linhas do arquivo de classificação
-
-
-  media1=0d0
-  media2=0d0
-  media1=SUM(lito1(1,:))/SIZE(lito1(1,:))
-  media2=SUM(lito2(1,:))/SIZE(lito2(1,:))
-  PRINT*,'Media da coluna 1 lito1=',media1
-  PRINT*,'Media da coluna 1 lito2=',media2
-
-  IF (nt>nc)THEN
-    n=nt
-   ELSE IF (nt<nc) THEN
-    n=nc
-    ELSE
-    n=nt
-  END IF
-
- ! UBOUND(ARRAY [, DIM [, KIND]])
-
-
- ! Precisa calcular o centróide
- !o centróide é a média aritimética das propriedades físicas
- !eucli=SQRT(X-Xmeani)^1/2
-
-  !DO k=1,SIZE(lito1(1,:))
-  eucli= SQRT((lito1(1,1)-media1)**2+(lito2(1,1)-media2)**2)
-  !ENDDO
-
-
-
+  eucli=0d0
+  
+  IF(SIZE(lito1(1,:)) /= SIZE(lito2(1,:)))THEN
+    PRINT*,'WARNING! THE PROPERTIES NUMBER´S OF lito1 AND lito2 MUST BE THE SAME.'
+    STOP
+    RETURN
+  END IF  
+  
+  DO k=1,SIZE(lito1(1,:))  ! Inicia o laço da primeira até a última propriedade que é dado pelo size de lito
+   media1=0d0 !zera as variáveis 
+   media1=SUM(lito1(:,k))/SIZE(lito1(:,k)) !calcula as médias para as k propriedades
+  
+      eucli= eucli + SQRT((lito2(1,k)-media1)**2) ! Cálculo da medida de semelhança de euclides 
+  END DO ! Final do laço das k propriedades  
 
 END SUBROUTINE euclideana
 
