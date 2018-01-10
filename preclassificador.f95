@@ -42,12 +42,12 @@ PROGRAM preclassificador
   INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
   INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
 
-  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim, k, it, erro
-  REAL(KIND=DP):: a1, a2, a3, a4, a5, a6, dist, dist_min
+  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim, k, it, erro, kmin, kminE
+  REAL(KIND=DP):: a1, a2, a3, a4, a5, a6, dist, dist_min, dist_minE
   REAL(KIND=SP):: inicial, final, custocomputacional
 
-  INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2, kmin, contador
-  REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl , distC
+  INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2, contador
+  REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl , distC, distE
   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2, dadosC
   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:,:)::hip
   REAL(KIND=DP):: eucli
@@ -141,11 +141,12 @@ DO it=1,ntc
     !  WRITE(6,*) 'primeiro dado a ser classificado=', lito2(1,i)
     !END DO
 
-    CALL maha(lito1,ic1(1),lito2,1,4,dist)
-
+    CALL maha(lito1,ic1(1),lito2,1,4,dist) !Cálculo via dist de maha
  !   WRITE(6,*) '======================='
+    CALL euclideana(lito1,lito2,eucli)! Cálculo via dist de euclides
 
     distC(k) = dist
+    distE(k) = eucli
   !  PRINT*, 'dist_maha =',distC(k),k
 
   ENDDO ! laço over k (every lithotype)
@@ -168,7 +169,7 @@ DO it=1,ntc
 !WRITE(2,19) 'Prof, Maha, Poco, Class'
 WRITE(2,20) dadosC(it,5), dist, dadosC(it,6), kmin(it)  ! Escreve o arquivo de saída semelhança
 
-END DO
+END DO ! laço do it
 
 
 ! ---- propriedades fisicas do arquivo a ser classificado:
@@ -187,9 +188,11 @@ END DO
 
 
     CALL maha(lito1,ic1(1),lito2,1,4,dist)
-    !WRITE(6,*) '======================='
+    WRITE(6,*) '======================='
+    CALL euclideana(lito1,lito2,eucli)
 
     distC(k) = dist
+    distE(k) = eucli
     !PRINT*, 'dist_maha =',distC(k),k
 
   ENDDO ! laço over k (every lithotype)
@@ -197,13 +200,13 @@ END DO
    ! localizando a menor distancia e o respectivo litotipo:
    kmin = MINLOC(distC,1)!Retorna o menor valor de distC
    dist_min = MINVAL(distC,1)
+   kminE = MINLOC(distE,1)!Retorna o menor valor de distC
+   dist_minE = MINVAL(distE,1)
 
   !WRITE(6,*) '========================'
   PRINT*, 'Menor distância de mahalanobis encontrada->',dist_min!,kmin
+  PRINT*, 'Menor distância de euclides encontrada->',dist_minE!,kmin
   PRINT*,'Erro->',erro
-
-  CALL euclideana(lito1,lito2,eucli)
-  PRINT*,'Distância euclideana=', eucli
 
 
    WRITE(6,*) '======================================================'
@@ -617,19 +620,19 @@ SUBROUTINE euclideana(lito1,lito2,eucli)
  INTEGER(KIND=SP):: k
 
   eucli=0d0
-  
+
   IF(SIZE(lito1(1,:)) /= SIZE(lito2(1,:)))THEN
     PRINT*,'WARNING! THE PROPERTIES NUMBER´S OF lito1 AND lito2 MUST BE THE SAME.'
     STOP
     RETURN
-  END IF  
-  
+  END IF
+
   DO k=1,SIZE(lito1(1,:))  ! Inicia o laço da primeira até a última propriedade que é dado pelo size de lito
-   media1=0d0 !zera as variáveis 
+   media1=0d0 !zera as variáveis
    media1=SUM(lito1(:,k))/SIZE(lito1(:,k)) !calcula as médias para as k propriedades
-  
-      eucli= eucli + SQRT((lito2(1,k)-media1)**2) ! Cálculo da medida de semelhança de euclides 
-  END DO ! Final do laço das k propriedades  
+
+      eucli= eucli + SQRT((lito2(1,k)-media1)**2) ! Cálculo da medida de semelhança de euclides
+  END DO ! Final do laço das k propriedades
 
 END SUBROUTINE euclideana
 
