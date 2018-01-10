@@ -47,9 +47,10 @@ PROGRAM preclassificador
   REAL(KIND=SP):: inicial, final, custocomputacional
 
   INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2, kmin, contador
-  REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl , distC, eucli
+  REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl , distC
   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2, dadosC
   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:,:)::hip
+  REAL(KIND=DP):: eucli
 
   CHARACTER(LEN=80):: rocha
 
@@ -107,7 +108,7 @@ PROGRAM preclassificador
 
   END DO
 
-    ALLOCATE(lito1(ic1(1),4),lito2(1,4),distC(SIZE(hip,3) ),contador(ntc), eucli(SIZE(hip(:,1,1))) )
+    ALLOCATE(lito1(ic1(1),4),lito2(1,4),distC(SIZE(hip,3) ),contador(ntc) )
 
     lito1=0d0
     lito2=0d0
@@ -201,12 +202,8 @@ END DO
   PRINT*, 'Menor distância de mahalanobis encontrada->',dist_min!,kmin
   PRINT*,'Erro->',erro
 
-  CALL euclideana(hip(:,1,1),lito2,eucli)
-  21 FORMAT(4(D16.16, 4X))
-  DO i=1,SIZE(eucli)
-  PRINT*, eucli(i), i
-  ENDDO
-
+  CALL euclideana(lito1,lito2,eucli)
+  PRINT*,'Distância euclideana=', eucli
 
 
    WRITE(6,*) '======================================================'
@@ -607,42 +604,33 @@ END DO
    END SUBROUTINE estatistica
 
 !-------------------------------------------------------------------------------
-    SUBROUTINE euclideana(lito1,lito2,eucli)
-    !SUBROUTINE euclideana(a1,a2,a3,a4,b1,b2,b3,b4,eucli)
-     IMPLICIT NONE
-     INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
-     INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
+SUBROUTINE euclideana(lito1,lito2,eucli)
 
-     !REAL(KIND=DP), INTENT(IN):: a1,a2,a3,a4
-     !REAL(KIND=DP), INTENT(IN):: b1,b2,b3,b4
-     REAL(KIND=DP), DIMENSION(:,:), INTENT(IN)::lito1, lito2
-     REAL(KIND=DP), DIMENSION(:), INTENT(INOUT):: eucli
+ IMPLICIT NONE
+ INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
+ INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
 
-     INTEGER(KIND=SP):: i, nt, nc, n, k
+ REAL(KIND=DP), DIMENSION(:,:), INTENT(IN)::lito1, lito2
+ REAL(KIND=DP), INTENT(OUT):: eucli
+ REAL(KIND=DP)::media1
 
-      nt=SIZE(lito1,1) !nt, número de linhas do arquivo de treinamento
-      nc=SIZE(lito2,1) !nc, número de linhas do arquivo de classificação
-      
-      IF (nt>nc)THEN 
-        n=nt
-       ELSE IF (nt<nc) THEN
-        n=nc
-        ELSE 
-        n=nt
-      END IF
+ INTEGER(KIND=SP):: k
 
-     !dist=SQRT((a1-b1)**2+(a2-b2)**2+(a3-b3)**2+(a4-b4)**2)
-     
-     DO i=1,n
-      DO k=1,SIZE(lito1,2)
-      eucli(i)= SQRT((lito1(i,k)**2-lito2(i,k)**2)) !+(lito1(i,2)**2-lito2(i,2)**2)+ &
-      !(lito1(i,3)**2-lito2(i,3)**2)+(lito1(i,4))**2-(lito2(i,4))**2)
-      ENDDO 
-    ENDDO
+  eucli=0d0
+  
+  IF(SIZE(lito1(1,:)) /= SIZE(lito2(1,:)))THEN
+    PRINT*,'WARNING! THE PROPERTIES NUMBER´S OF lito1 AND lito2 MUST BE THE SAME.'
+    STOP
+    RETURN
+  END IF  
+  
+  DO k=1,SIZE(lito1(1,:))  ! Inicia o laço da primeira até a última propriedade que é dado pelo size de lito
+   media1=0d0 !zera as variáveis 
+   media1=SUM(lito1(:,k))/SIZE(lito1(:,k)) !calcula as médias para as k propriedades
+  
+      eucli= eucli + SQRT((lito2(1,k)-media1)**2) ! Cálculo da medida de semelhança de euclides 
+  END DO ! Final do laço das k propriedades  
 
-    PRINT*,n,nt,nc,SIZE(lito1,2)
-    PAUSE
-     
-   END SUBROUTINE euclideana
+END SUBROUTINE euclideana
 
 END PROGRAM preclassificador
