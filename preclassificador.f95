@@ -42,11 +42,11 @@ PROGRAM preclassificador
   INTEGER, PARAMETER::SP = SELECTED_INT_KIND(r=8)
   INTEGER, PARAMETER::DP = SELECTED_REAL_KIND(12,100)
 
-  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim, k, it, erro, kmin, kminE
+  INTEGER(KIND=DP):: i, j, ij, nt, ntc, nlito, ndim, k, it, erro, erroE
   REAL(KIND=DP):: a1, a2, a3, a4, a5, a6, dist, dist_min, dist_minE
   REAL(KIND=SP):: inicial, final, custocomputacional
 
-  INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2, contador
+  INTEGER(KIND=DP), ALLOCATABLE, DIMENSION(:):: ic1, ic2, contador, kmin, kminE
   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:):: prof, cl , distC, distE
   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:)::tr, lito1, lito2, dadosC
   REAL(KIND=DP), ALLOCATABLE, DIMENSION(:,:,:)::hip
@@ -78,8 +78,8 @@ PROGRAM preclassificador
  !!!!!!!!!!!!!!!!!!!!!!!!!!ARMAZENANDO AS VARIÁVEIS DE ENTRADA !!!!!!!!!!!!!!!!!!
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+! Leitura dos arquivos de treinamento e classificação (alocação da matrix lito1)
  CALL entrada
-
 
    ! Preenchendo a hipermatriz
   DO i=1,nt
@@ -107,20 +107,23 @@ PROGRAM preclassificador
     END DO
 
   END DO
+    ! alocação de arrays:
+    ALLOCATE(lito1(ic1(1),4),lito2(1,4),distC(SIZE(hip,3) ), distE( SIZE(hip,3) ), kmin(ntc), kminE(ntc) ,contador(ntc) )
 
-    ALLOCATE(lito1(ic1(1),4),lito2(1,4),distC(SIZE(hip,3) ),contador(ntc) )
-
-    lito1=0d0
-    lito2=0d0
-    eucli=0d0
-    erro=0d0
+    lito1 = 0d0
+    lito2 = 0d0
+    eucli = 0d0
+    erro = 0
+    erroE = 0
   CALL estatistica
 
   !Criando um arquivo de saída
   OPEN(2,file='SemelhançaC2.txt')
-  !19 FORMAT(A4, 4X, A4, 4X, A5, 4X, A5)
-  20 FORMAT(F8.1,4x,F15.5,4x,F8.2,4x,I4)
+  19 FORMAT(A10, 4X, A10, 6X, A10, 2X, A14, 4X, A8, 4X, A8)
+  20 FORMAT(F5.1,2x,F15.5,3x,F15.2,4x,F8.4,8x,I4,9x,I2)
 
+
+WRITE(2,19) 'prof(m)','dist_Maha ','dist_Eucli','ID-verdadeiro','ID-Maha', 'ID-Eucli'
 DO it=1,ntc
 
 ! ---- propriedades fisicas do arquivo a ser classificado:
@@ -152,62 +155,34 @@ DO it=1,ntc
   ENDDO ! laço over k (every lithotype)
 
    ! localizando a menor distancia e o respectivo litotipo:
-   kmin(it) = MINLOC(distC,1) !Retorna o menor valor de distC
-   dist_min = MINVAL(distC,1)
+   ! MAHA:
+   kmin(it)  = MINLOC(distC,1) !Retorna o menor valor de distC
+   dist_min  = MINVAL(distC,1)
 
-
+   ! EUCLIDES:
+   kminE(it) = MINLOC(distE,1)!Retorna o menor valor de distC
+   dist_minE = MINVAL(distE,1)
 
   !Calculando os erros de classificação
    IF (dadosC(it,6) /= kmin(it)) THEN
      erro=erro+1
    END IF
-
-
-
+   IF (dadosC(it,6) /= kminE(it)) THEN
+     erroE=erroE+1
+   END IF
 
 !print*,'it=', it, 'indice=',kmin(it), 'distancia=',dist
 !WRITE(2,19) 'Prof, Maha, Poco, Class'
-WRITE(2,20) dadosC(it,5), dist, dadosC(it,6), kmin(it)  ! Escreve o arquivo de saída semelhança
+  WRITE(2,20) dadosC(it,5), dist, eucli, dadosC(it,6), kmin(it), kminE(it)  ! Escreve o arquivo de saída semelhança
+  WRITE(*,20) dadosC(it,5), dist, eucli, dadosC(it,6), kmin(it), kminE(it)  ! Escreve o arquivo de saída semelhança
 
 END DO ! laço do it
 
-
-! ---- propriedades fisicas do arquivo a ser classificado:
-    lito2(1,1)=a3
-    lito2(1,2)=a4
-    lito2(1,3)=a5
-    lito2(1,4)=a6
-
- ! Laço de cada litotipo (automação das distancias via subroutine maha):
-  DO k=1, SIZE(hip,3) ! = SIZE(hip(1,1,:) )
-    DO i=1,ic1(1)
-     DO j=1,4
-      lito1(i,j)=hip(i,j+1,k)
-     END DO
-    END DO
-
-
-    CALL maha(lito1,ic1(1),lito2,1,4,dist)
-    WRITE(6,*) '======================='
-    CALL euclideana(lito1,lito2,eucli)
-
-    distC(k) = dist
-    distE(k) = eucli
-    !PRINT*, 'dist_maha =',distC(k),k
-
-  ENDDO ! laço over k (every lithotype)
-
-   ! localizando a menor distancia e o respectivo litotipo:
-   kmin = MINLOC(distC,1)!Retorna o menor valor de distC
-   dist_min = MINVAL(distC,1)
-   kminE = MINLOC(distE,1)!Retorna o menor valor de distC
-   dist_minE = MINVAL(distE,1)
-
   !WRITE(6,*) '========================'
-  PRINT*, 'Menor distância de mahalanobis encontrada->',dist_min!,kmin
-  PRINT*, 'Menor distância de euclides encontrada->',dist_minE!,kmin
-  PRINT*,'Erro->',erro
-
+  PRINT*, 'Menor distância de mahalanobis encontrada->',dist_min !,kmin
+  PRINT*, 'Menor distância de euclides encontrada->',dist_minE !,kminE
+  PRINT*,'Erro_Maha -->',erro
+  PRINT*,'Erro_Eucli -->',erroE
 
    WRITE(6,*) '======================================================'
    CALL cpu_time(final)
@@ -497,7 +472,7 @@ END SUBROUTINE maha
    WRITE(6,*) "n de dados a serem classificados->",ntc
 
 
-   ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9),ic1(5),ic2(4),kmin(ntc),&
+   ALLOCATE(tr(nt,4),cl(nt),prof(nt),hip(nt,5,9),ic1(5),ic2(4),&
    dadosC(ntc,6))
 
 
